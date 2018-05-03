@@ -58,15 +58,39 @@ condition <- sp$lon <= grid$lon + r & sp$lon >= grid$lon - r &
              sp$lat <= grid$lat + r & sp$lat >= grid$lat - r
 
 teste <- c()
-teste_df <- data.frame()
 for (specie in levels(unique(sp$sp))) {
-  print(specie)
+  # print(specie)
   teste <- c(teste, specie)
 }
 teste_df <- data.frame(teste)
 
+teste_df <- as.data.frame(matrix(rep(0, 2 + length(teste)), nrow=1))
+names(teste_df) <- c("lon", "lat", teste)
+
+teste_df$`Bradypus variegatus` <- 1
+
+
 teste
 teste_df
-grid
 
+
+
+goalsMenu <- paste("Name", 1:40, sep="")
+output <- as.data.frame(matrix(rep(0, 5 + length(teste)), nrow=1))
+names(output) <- c("analysis", "patient", "date", teste, "CR1", "CR2")
+
+output
+
+
+
+
+
+
+
+col.names <- teste  # Example column names
+data <- vector("list", length(col.names))
+names(data) <- col.names
+print(str(data))            # Inspect the structure
+
+data$`Bradypus variegatus` <- condition
 
