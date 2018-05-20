@@ -1,0 +1,6 @@
+install.packages('leaflet')
+install.packages('RColorBrewer')
+install.packages('scales')
+install.packages('lattice')
+install.packages('dplyr')
+install.packages('DT')
