@@ -1,0 +1,12 @@
+name: coord
+title: coord
+username:
+account: jupiter
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 346434
+bundleId: 1384839
+url: https://jupiter.shinyapps.io/coord/
+when: 1526912876.94923
+asMultiple: FALSE
+asStatic: FALSE
