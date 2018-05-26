@@ -73,12 +73,7 @@ body <- dashboardBody(
       ),
   
       fluidRow(
-        box(
-          collapsible = TRUE,
-          title = "Map", 
-          status = "primary",
-          tabPanel("Map", leafletOutput("map", width="500", height="500"))
-        ),
+        
         
         box(
           collapsible = TRUE,
@@ -90,8 +85,18 @@ body <- dashboardBody(
     ),
     
     
-    tabItem("indicators",
-        infoBoxOutput("total_grid_coordinates")
+    tabItem(
+      "indicators",
+      fluidRow(
+        infoBoxOutput("total_grid_coordinates"),
+        
+        box(
+          collapsible = TRUE,
+          title = "Map", 
+          status = "primary",
+          tabPanel("Map", leafletOutput("map", width="500", height="500"))
+        )
+      )
     )
   )
 )
