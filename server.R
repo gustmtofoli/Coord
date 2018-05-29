@@ -14,6 +14,16 @@ function(input, output, session) {
     }
   })
   
+  output$species <- DT::renderDataTable({
+    if (!is.null(input$file2)) {
+      sp <- input$file2
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      df_freq <- count(sp_read, sp_read$sp)
+      data.frame(Specie = df_freq$`sp_read$sp`, Freq = df_freq$n)
+    }
+  })
+  
   output$sp <- DT::renderDataTable({
     if (!is.null(input$file2)) {
       sp <- input$file2
@@ -68,26 +78,36 @@ function(input, output, session) {
                             sep = input$sep, quote = input$quote) 
       sp_read <- read.csv(sp$datapath, header = input$header,
                           sep = input$sep, quote = input$quote) 
-      result_df <- data.frame(Sp_lau = c(0,1,0,1), Sp_lau_2 = c(1,1,0,0))
-      result_df
+      
+      
+      # teste <- data.frame(sp = c('A', 'A', 'A', 'B', 'B'), lon = c(10, 7, 5, 5, 11), lat = c(4, 2, 7, 7, 8))
+
+      # sp_freq <- count(teste, teste$sp)
+      
+      sp_freq <- count(sp_read, sp_read$sp)
+      
+      d = 4
+      r = d/2
+      
+      result_all <- c()
+      for (sp_index in 1:nrow(sp_read)) {
+        result <- c()
+        for (grid_index in 1:nrow(grid_read)) {
+          result <- c(result, ifelse(sp_read[sp_index,2:3]$lon <= grid_read[grid_index,]$lon + r &
+                                       sp_read[sp_index,2:3]$lon >= grid_read[grid_index,]$lon - r &
+                                       sp_read[sp_index,2:3]$lat <= grid_read[grid_index,]$lat + r &
+                                       sp_read[sp_index,2:3]$lat >= grid_read[grid_index,]$lat - r, 1, 0))
+        }
+        result_all <- c(result_all, result)
+      }
+
+      res_test <- array(result_all, dim = c(nrow(grid_read), nrow(sp_read)))
+      
+      # col_sum = apply(res_test, 2, sum)
+      res <- data.frame(row_sum = apply(res_test, 1, sum))
+
+      res
     }
-    
   })
-  
-  output$total_grid_coordinates <- renderInfoBox({
-    total <- 0
-    if (!is.null(input$file2)) {
-      sp <- input$file2
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote) 
-      total <- length(unique(sp_read$sp))
-    }
-    
-    infoBox(
-      "Species", total, icon = icon("list"),
-      color = "navy", fill = TRUE
-    )
-  })
-  
 }
 

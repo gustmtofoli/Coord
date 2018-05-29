@@ -4,7 +4,8 @@ library(DT)
 
 
 header <- dashboardHeader(
-  titleWidth = 0
+  title = "Moon",
+  titleWidth = 187
 )
 
 
@@ -59,7 +60,7 @@ body <- dashboardBody(
           width = 4,
           collapsible = TRUE,
           title = "Grid file", 
-          status = "primary",
+          status = "success",
           dataTableOutput("grid")
         ),
         
@@ -67,7 +68,7 @@ body <- dashboardBody(
           width = 4,
           collapsible = TRUE,
           title = "Sp File", 
-          status = "primary",
+          status = "info",
           dataTableOutput("sp")
         )
       ),
@@ -76,8 +77,9 @@ body <- dashboardBody(
         box(
           collapsible = TRUE,
           title = "Results", 
-          status = "primary",
-          DT::dataTableOutput("result")
+          status = "warning",
+          DT::dataTableOutput("result"),
+          actionButton("download_results", "Download")
         )
       )
     ),
@@ -86,14 +88,40 @@ body <- dashboardBody(
     tabItem(
       "indicators",
       fluidRow(
-        infoBoxOutput("total_grid_coordinates"),
+        box(
+          collapsible = TRUE,
+          title = "Species", 
+          status = "success",
+          DT::dataTableOutput("species")
+        ),
         
         box(
           collapsible = TRUE,
-          title = "Map", 
-          status = "primary",
-          tabPanel("Species location", leafletOutput("map", width="300", height="300"))
+          title = "Species location", 
+          status = "success",
+          leafletOutput("map", width="300", height="300")
+        ),
+        
+        box(
+          collapsible = TRUE,
+          title = "Centroids location", 
+          status = "info"
+        ),
+        
+        box(
+          collapsible = TRUE,
+          title = "Scatter plot", 
+          status = "warning",
+          actionButton("download_scatterplot", "Download")
+        ),
+        
+        box(
+          collapsible = TRUE,
+          title = "Boxplot", 
+          status = "warning",
+          actionButton("download_boxplot", "Download")
         )
+        
       )
     )
   )
