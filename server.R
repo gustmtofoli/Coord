@@ -3,6 +3,7 @@ library(leaflet)
 library(dplyr)
 library(shiny)
 library(DT)
+library(ggplot2)
 
 function(input, output, session) {
   output$grid <- DT::renderDataTable({
@@ -33,7 +34,39 @@ function(input, output, session) {
     }
   })
   
-  output$map <- renderLeaflet({
+  output$scatter_plot <- renderPlot({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      grid <- input$file1
+      sp <- input$file2
+
+       sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      
+      ggplot(data = sp_read, aes(x = lat, y = lon)) +
+          geom_point(aes(color = sp))
+    }
+  })
+  
+  output$boxplot <- renderPlot({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      grid <- input$file1
+      sp <- input$file2
+      
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      
+      ggplot(data = sp_read, aes(x = lat, y = lon)) +
+        geom_boxplot(aes(color = sp))
+    }
+  })
+  
+  output$map_sp <- renderLeaflet({
     
     if (!is.null(input$file2)) {
       # grid <- input$file1
@@ -67,6 +100,42 @@ function(input, output, session) {
       
     }
       # return(NULL)
+  })
+  
+  output$map_grid <- renderLeaflet({
+    
+    if (!is.null(input$file1)) {
+      # grid <- input$file1
+      grid <- input$file1
+      
+      # grid_read <- read.csv(grid$datapath, header = input$header,
+      # sep = input$sep, quote = input$quote)
+      
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      # lon <- c(-90.85, -96.85)
+      # lat <- c(30.45, 36.45)
+      pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+      leaflet() %>%
+        addTiles(
+          urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+          attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+        ) %>%
+        setView(lng = -93.85, lat = 37.45, zoom = 4) %>%
+        # addMarkers(lon, lat) %>%
+        addCircleMarkers(
+          # lng = ~ifelse(is.null(sp_read), 0, sp_read$lon),
+          # lat = ~ifelse(is.null(sp_read), 0,sp_read$lat),
+          lng = grid_read$lon,
+          lat = grid_read$lat,
+          # popup = grid_read$sp,
+          radius = 5,
+          color = "blue",
+          stroke = FALSE, fillOpacity = 0.5
+        )
+      
+    }
+    # return(NULL)
   })
   
   output$result <- DT::renderDataTable({

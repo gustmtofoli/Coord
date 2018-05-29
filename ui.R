@@ -99,26 +99,29 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
-          leafletOutput("map", width="300", height="300")
+          leafletOutput("map_sp", width="300", height="300")
         ),
         
         box(
           collapsible = TRUE,
           title = "Centroids location", 
-          status = "info"
+          status = "info",
+          leafletOutput("map_grid", width="300", height="300")
         ),
         
         box(
           collapsible = TRUE,
-          title = "Scatter plot", 
+          title = "Sp Scatter plot", 
           status = "warning",
+          plotOutput("scatter_plot"),
           actionButton("download_scatterplot", "Download")
         ),
         
         box(
           collapsible = TRUE,
-          title = "Boxplot", 
+          title = "Sp Boxplot", 
           status = "warning",
+          plotOutput("boxplot"),
           actionButton("download_boxplot", "Download")
         )
         
