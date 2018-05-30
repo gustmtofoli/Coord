@@ -12,7 +12,11 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Coord", tabName = "coord", badgeLabel = c("In progress"), badgeColor = "red"),
-    menuItem("Indicators", tabName = "indicators", badgeLabel = "In progress", badgeColor = "red")
+    # menuItem("Indicators", tabName = "indicators", badgeLabel = "In progress", badgeColor = "red"),
+    menuItem("Maps", tabName = "maps", badgeLabel = "New", badgeColor = "green"),
+    menuItem("Charts", tabName = "charts", badgeLabel = "New", badgeColor = "green"),
+    menuItem("Summary", tabName = "summary", badgeLabel = "New", badgeColor = "green")
+   
   )
 )
 
@@ -84,17 +88,21 @@ body <- dashboardBody(
       )
     ),
     
-    
     tabItem(
-      "indicators",
+      "summary",
       fluidRow(
         box(
           collapsible = TRUE,
           title = "Species", 
           status = "success",
           DT::dataTableOutput("species")
-        ),
-        
+        )
+      )
+    ),
+    
+    tabItem(
+      "maps",
+      fluidRow(
         box(
           collapsible = TRUE,
           title = "Species location", 
@@ -107,8 +115,13 @@ body <- dashboardBody(
           title = "Centroids location", 
           status = "info",
           leafletOutput("map_grid", width="300", height="300")
-        ),
-        
+        )
+      )
+    ),
+
+    tabItem(
+      "charts",
+      fluidRow(
         box(
           collapsible = TRUE,
           title = "Sp Scatter plot", 
@@ -124,15 +137,16 @@ body <- dashboardBody(
           plotOutput("boxplot"),
           actionButton("download_boxplot", "Download")
         )
-        
       )
     )
   )
 )
 
+
+
 shinyUI(
 dashboardPage(
-  skin = "blue",
+  skin = "green",
   header,
   sidebar,
   body
