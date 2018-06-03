@@ -128,14 +128,6 @@ body <- dashboardBody(
           status = "warning",
           plotOutput("scatter_plot"),
           actionButton("download_scatterplot", "Download")
-        ),
-        
-        box(
-          collapsible = TRUE,
-          title = "Sp Boxplot", 
-          status = "warning",
-          plotOutput("boxplot"),
-          actionButton("download_boxplot", "Download")
         )
       )
     )

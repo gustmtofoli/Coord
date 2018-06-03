@@ -50,22 +50,6 @@ function(input, output, session) {
     }
   })
   
-  output$boxplot <- renderPlot({
-    if (!is.null(input$file2) & !is.null(input$file1)) {
-      grid <- input$file1
-      sp <- input$file2
-      
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      
-      ggplot(data = sp_read, aes(x = lat, y = lon)) +
-        geom_boxplot(aes(color = sp))
-    }
-  })
-  
   output$map_sp <- renderLeaflet({
     
     if (!is.null(input$file2)) {
@@ -148,11 +132,6 @@ function(input, output, session) {
       sp_read <- read.csv(sp$datapath, header = input$header,
                           sep = input$sep, quote = input$quote) 
       
-      
-      # teste <- data.frame(sp = c('A', 'A', 'A', 'B', 'B'), lon = c(10, 7, 5, 5, 11), lat = c(4, 2, 7, 7, 8))
-
-      # sp_freq <- count(teste, teste$sp)
-      
       sp_freq <- count(sp_read, sp_read$sp)
       
       d = 4
@@ -172,10 +151,27 @@ function(input, output, session) {
 
       res_test <- array(result_all, dim = c(nrow(grid_read), nrow(sp_read)))
       
-      # col_sum = apply(res_test, 2, sum)
-      res <- data.frame(row_sum = apply(res_test, 1, sum))
-
-      res
+      colnames(res_test) <- sp_read$sp
+      
+      res_test
+      
+      start_col <- 1
+      
+      res_sum_per_sp <- c()
+      for (i in 1:nrow(sp_freq)) {
+        res_sum_per_sp <- c(res_sum_per_sp, apply(res_test[, start_col:(start_col + sp_freq$n[i] - 1)], 1, sum))
+        
+        start_col <- sp_freq$n[i] + 1
+      }
+      
+      res_sum_per_sp <- array(res_sum_per_sp, dim = c(nrow(grid_read), nrow(sp_freq)))
+      
+      colnames(res_sum_per_sp) <- sp_freq$`sp_read$sp`
+      
+      res_sum_per_sp
+      
+      ifelse(res_sum_per_sp[ , ] > 0, 1, 0)
+      
     }
   })
 }
