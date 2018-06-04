@@ -1,9 +1,9 @@
-library(shinydashboard)
-library(leaflet)
-library(dplyr)
-library(shiny)
-library(DT)
-library(ggplot2)
+library(shinydashboard) #ok
+library(leaflet) #ok
+library(dplyr) #ok
+library(shiny) #ok
+library(DT) #ok
+library(ggplot2) #ok
 
 function(input, output, session) {
   output$grid <- DT::renderDataTable({
@@ -30,7 +30,7 @@ function(input, output, session) {
       sp <- input$file2
       sp_read <- read.csv(sp$datapath, header = input$header,
                           sep = input$sep, quote = input$quote) 
-      sp_read
+      data.frame(sp_read)
     }
   })
   
