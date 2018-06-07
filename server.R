@@ -1,17 +1,86 @@
-library(shinydashboard) #ok
-library(leaflet) #ok
-library(dplyr) #ok
-library(shiny) #ok
-library(DT) #ok
-library(ggplot2) #ok
+library(shinydashboard)
+library(leaflet)
+library(dplyr)
+library(shiny)
+library(DT)
+library(ggplot2)
 
 function(input, output, session) {
+  
   output$grid <- DT::renderDataTable({
     if (!is.null(input$file1)) {
       grid <- input$file1
       grid_read <- read.csv(grid$datapath, header = input$header,
                             sep = input$sep, quote = input$quote)
       grid_read
+    }
+  })
+  
+  output$sp <- DT::renderDataTable({
+    if (!is.null(input$file2)) {
+      sp <- input$file2
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote) 
+      data.frame(sp_read)
+    }
+  })
+  
+  output$result <- DT::renderDataTable({
+    grid_read <- read.csv("grid.csv", header = TRUE, sep = ",")
+    sp_read <- read.csv("sp.csv", header = TRUE, sep = ",")
+    if (!is.null(input$file1) & !is.null(input$file2)) {
+      grid <- input$file1
+      sp <- input$file2
+      
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote) 
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote) 
+      
+      sp_freq <- count(sp_read, sp_read$sp)
+      
+      d = 4
+      r = d/2
+      
+      result_all <- c()
+      for (sp_index in 1:nrow(sp_read)) {
+        result <- c()
+        for (grid_index in 1:nrow(grid_read)) {
+          result <- c(result, ifelse(sp_read[sp_index,2:3]$lon <= grid_read[grid_index,]$lon + r &
+                                       sp_read[sp_index,2:3]$lon >= grid_read[grid_index,]$lon - r &
+                                       sp_read[sp_index,2:3]$lat <= grid_read[grid_index,]$lat + r &
+                                       sp_read[sp_index,2:3]$lat >= grid_read[grid_index,]$lat - r, 1, 0))
+        }
+        result_all <- c(result_all, result)
+      }
+      
+      res_test <- array(result_all, dim = c(nrow(grid_read), nrow(sp_read)))
+      
+      colnames(res_test) <- sp_read$sp
+      
+      start_col <- 1
+      
+      res_sum_per_sp <- c()
+      for (i in 1:nrow(sp_freq)) {
+        res_sum_per_sp <- c(res_sum_per_sp, apply(res_test[, start_col:(start_col + sp_freq$n[i] - 1)], 1, sum))
+        
+        start_col <- sp_freq$n[i] + 1
+      }
+      
+      res_sum_per_sp <- array(res_sum_per_sp, dim = c(nrow(grid_read), nrow(sp_freq)))
+      
+      colnames(res_sum_per_sp) <- sp_freq$`sp_read$sp`
+      
+      res_sum_per_sp_bin <- ifelse(res_sum_per_sp[ , ] > 0, 1, 0)
+      
+      df_res_sum_per_sp_bin <- data.frame(res_sum_per_sp_bin)
+      
+      df_res_sum_per_sp_bin$TOTAL <- apply(res_sum_per_sp_bin, 1, sum)
+      
+      df_res_sum_per_sp_bin["TOTAL", ] <- apply(df_res_sum_per_sp_bin, 2, sum)
+      
+      df_res_sum_per_sp_bin
+      
     }
   })
   
@@ -25,14 +94,6 @@ function(input, output, session) {
     }
   })
   
-  output$sp <- DT::renderDataTable({
-    if (!is.null(input$file2)) {
-      sp <- input$file2
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote) 
-      data.frame(sp_read)
-    }
-  })
   
   output$scatter_plot <- renderPlot({
     if (!is.null(input$file2) & !is.null(input$file1)) {
@@ -121,58 +182,6 @@ function(input, output, session) {
     }
     # return(NULL)
   })
-  
-  output$result <- DT::renderDataTable({
-    if (!is.null(input$file1) & !is.null(input$file2)) {
-      grid <- input$file1
-      sp <- input$file2
-      
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote) 
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote) 
-      
-      sp_freq <- count(sp_read, sp_read$sp)
-      
-      d = 4
-      r = d/2
-      
-      result_all <- c()
-      for (sp_index in 1:nrow(sp_read)) {
-        result <- c()
-        for (grid_index in 1:nrow(grid_read)) {
-          result <- c(result, ifelse(sp_read[sp_index,2:3]$lon <= grid_read[grid_index,]$lon + r &
-                                       sp_read[sp_index,2:3]$lon >= grid_read[grid_index,]$lon - r &
-                                       sp_read[sp_index,2:3]$lat <= grid_read[grid_index,]$lat + r &
-                                       sp_read[sp_index,2:3]$lat >= grid_read[grid_index,]$lat - r, 1, 0))
-        }
-        result_all <- c(result_all, result)
-      }
 
-      res_test <- array(result_all, dim = c(nrow(grid_read), nrow(sp_read)))
-      
-      colnames(res_test) <- sp_read$sp
-      
-      res_test
-      
-      start_col <- 1
-      
-      res_sum_per_sp <- c()
-      for (i in 1:nrow(sp_freq)) {
-        res_sum_per_sp <- c(res_sum_per_sp, apply(res_test[, start_col:(start_col + sp_freq$n[i] - 1)], 1, sum))
-        
-        start_col <- sp_freq$n[i] + 1
-      }
-      
-      res_sum_per_sp <- array(res_sum_per_sp, dim = c(nrow(grid_read), nrow(sp_freq)))
-      
-      colnames(res_sum_per_sp) <- sp_freq$`sp_read$sp`
-      
-      res_sum_per_sp
-      
-      ifelse(res_sum_per_sp[ , ] > 0, 1, 0)
-      
-    }
-  })
 }
 

@@ -82,8 +82,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Results", 
           status = "warning",
-          DT::dataTableOutput("result"),
-          actionButton("download_results", "Download")
+          DT::dataTableOutput("result")
         )
       )
     ),
