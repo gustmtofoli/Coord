@@ -79,6 +79,7 @@ body <- dashboardBody(
   
       fluidRow(
         box(
+          width = 12,
           collapsible = TRUE,
           title = "Results", 
           status = "warning",
@@ -106,7 +107,8 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
-          leafletOutput("map_sp", width="300", height="300")
+          width = 12,
+          leafletOutput("map_sp", height="650")
         ),
         
         box(
@@ -115,6 +117,14 @@ body <- dashboardBody(
           status = "info",
           leafletOutput("map_grid", width="300", height="300")
         )
+        
+        # box(
+        #   collapsible = TRUE,
+        #   title = "map test",
+        #   status = "info",
+        #   width = 12,
+        #   leafletOutput("map_test",height = 650)
+        # )
       )
     ),
 
@@ -125,8 +135,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Sp Scatter plot", 
           status = "warning",
-          plotOutput("scatter_plot"),
-          actionButton("download_scatterplot", "Download")
+          plotOutput("scatter_plot")
         )
       )
     )

@@ -21,10 +21,16 @@ count <- length(unique(sp_read$sp))
 uni <- unique(sp_read$sp)
 pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
 leaflet() %>%
-  addTiles(
-    urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-    attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
-  ) %>%
+  addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "DarkMatter (CartoDB)") %>%
+  addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+  addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap",'DarkMatter (CartoDB)', 'Esri.WorldImagery'),
+                   options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+  # addTiles(
+  #   urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+  #   attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+  # ) %>%
   setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
   # addMarkers(lon, lat) %>%
   addCircleMarkers(
@@ -60,11 +66,40 @@ states <- geojsonio::geojson_read("https://raw.githubusercontent.com/codeforamer
 # bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
 # pal <- colorBin("YlOrRd", domain = states$density, bins = bins)
 
-m <- leaflet(states) %>%
+# m <- leaflet(states) %>%
+#   setView(-60.85, -15.45, 3) %>%
+#   addProviderTiles("MapBox", options = providerTileOptions(
+#     id = "mapbox.light",
+#     accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
+
+m <- leaflet() %>% #addTiles() %>% 
   setView(-60.85, -15.45, 3) %>%
-  addProviderTiles("MapBox", options = providerTileOptions(
-    id = "mapbox.light",
-    accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
+  addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "DarkMatter (CartoDB)") %>%
+  addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+  addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap",'DarkMatter (CartoDB)', 'Esri.WorldImagery'),
+                   options = layersControlOptions(collapsed = TRUE, autoZIndex = F))
+
+m
+
+# observe({
+  
+# print('update map size/opa/color')
+x <- grid_read$lon
+y <- grid_read$lat
+leafletProxy('map')%>%
+  addCircleMarkers(lng=x,fillColor = pal(),
+                   lat=y,
+                   stroke = F,
+                   layerId = as.character(1:length(x)),
+                   radius = input$size/10,
+                   fillOpacity = 1
+  )
+  
+# })
+
+
 
 # m %>% addPolygons()
 m %>% addPolygons(
