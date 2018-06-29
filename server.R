@@ -26,8 +26,6 @@ function(input, output, session) {
   })
   
   output$result <- DT::renderDataTable({
-    grid_read <- read.csv("grid.csv", header = TRUE, sep = ",")
-    sp_read <- read.csv("sp.csv", header = TRUE, sep = ",")
     if (!is.null(input$file1) & !is.null(input$file2)) {
       grid <- input$file1
       sp <- input$file2
@@ -148,39 +146,52 @@ function(input, output, session) {
   # })
   
   output$map_grid <- renderLeaflet({
-    
     if (!is.null(input$file1)) {
-      # grid <- input$file1
       grid <- input$file1
-      
-      # grid_read <- read.csv(grid$datapath, header = input$header,
-      # sep = input$sep, quote = input$quote)
-      
+      # sp <- input$file2
       grid_read <- read.csv(grid$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      # lon <- c(-90.85, -96.85)
-      # lat <- c(30.45, 36.45)
-      pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+                              sep = input$sep, quote = input$quote)
+      grid_read
+      # sp_read <- read.csv(sp$datapath, header = input$header,
+                          # sep = input$sep, quote = input$quote)
+      # sp_read <- read.csv("sp.csv", header = TRUE, sep = ",")
+      # count <- length(unique(sp_read$sp))
+      # uni <- unique(sp_read$sp)
+      # pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+      # colors <- c("red", "navy", "yellow")
+      
+      # html_legend <- "<img src='http://leafletjs.com/docs/images/leaf-green.png'>green<br/>
+      # <img src='http://leafletjs.com/docs/images/leaf-red.png'>red"
+      
       leaflet() %>%
-        addTiles(
-          urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-          attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
-        ) %>%
-        setView(lng = -93.85, lat = 37.45, zoom = 4) %>%
+        addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+        addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+        addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+        addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
+                         options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+        setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
         # addMarkers(lon, lat) %>%
+        # addCircleMarkers(
+        #   lng = grid_read$lon,
+        #   lat = grid_read$lat,
+        #   radius = 5,
+        #   color = "blue",
+        #   stroke = FALSE, fillOpacity = 0.5
+        # ) %>%
         addCircleMarkers(
-          # lng = ~ifelse(is.null(sp_read), 0, sp_read$lon),
-          # lat = ~ifelse(is.null(sp_read), 0,sp_read$lat),
           lng = grid_read$lon,
           lat = grid_read$lat,
-          # popup = grid_read$sp,
-          radius = 5,
+          radius = 7,
           color = "blue",
-          stroke = FALSE, fillOpacity = 0.5
-        )
-      
+          stroke = FALSE, fillOpacity = 0.3
+        ) 
+        # addLegend("bottomleft", 
+        #           colors =c("green",  "blue"),
+        #           labels= c("species", "centroids"),
+        #           title= "Legend",
+        #           opacity = 1)
+      # addControl(html = html_legend, position = "bottomleft")
     }
-    # return(NULL)
   })
   
   output$map_sp <- renderLeaflet({
@@ -188,14 +199,14 @@ function(input, output, session) {
       # grid <- input$file1
       sp <- input$file2
       # grid_read <- read.csv(grid$datapath, header = input$header,
-                              # sep = input$sep, quote = input$quote)
+      #                         sep = input$sep, quote = input$quote)
       sp_read <- read.csv(sp$datapath, header = input$header,
                          sep = input$sep, quote = input$quote)
-      sp_read <- read.csv("sp.csv", header = TRUE, sep = ",")
-      count <- length(unique(sp_read$sp))
-      uni <- unique(sp_read$sp)
-      pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
-      colors <- c("red", "navy", "yellow")
+      # sp_read <- read.csv("sp.csv", header = TRUE, sep = ",")
+      # count <- length(unique(sp_read$sp))
+      # uni <- unique(sp_read$sp)
+      # pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+      # colors <- c("red", "navy", "yellow")
       
       # html_legend <- "<img src='http://leafletjs.com/docs/images/leaf-green.png'>green<br/>
   # <img src='http://leafletjs.com/docs/images/leaf-red.png'>red"
@@ -212,7 +223,7 @@ function(input, output, session) {
         #   lng = grid_read$lon,
         #   lat = grid_read$lat,
         #   radius = 5,
-        #   color = "red",
+        #   color = "blue",
         #   stroke = FALSE, fillOpacity = 0.5
         # ) %>%
         addCircleMarkers(
@@ -220,9 +231,14 @@ function(input, output, session) {
           lat = sp_read$lat,
           popup = sp_read$sp,
           radius = 7,
-          color = "red",
+          color = "green",
           stroke = FALSE, fillOpacity = 0.3
-        ) 
+        )
+        # addLegend("bottomleft", 
+        #         colors =c("green",  "blue"),
+        #         labels= c("species", "centroids"),
+        #         title= "Legend",
+        #         opacity = 1)
         # addControl(html = html_legend, position = "bottomleft")
     }
   })

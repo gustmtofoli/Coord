@@ -1,13 +1,13 @@
-name: COORD
-title: COORD
+name: coord
+title: Coord
 username:
 account: jupiter
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 349202
-bundleId: 1393856
+bundleId: 1456606
 url: https://jupiter.shinyapps.io/COORD/
-when: 1527298905.08677
+when: 1530289867.1268
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: grid.csv|README.md|sp.csv|A_minor_Upgrade/Coord/server.R|A_minor_Upgrade/Coord/ui.R|Coord_web_v1/server.R|Coord_web_v1/teste-map.R|Coord_web_v1/ui.R
+ignoredFiles: grid.csv|Makefile|.RData|README.md|sp.csv|to_install.R|A_minor_Upgrade/Coord/server.R|A_minor_Upgrade/Coord/ui.R|Coord_web_v1/server.R|Coord_web_v1/teste-map.R|Coord_web_v1/ui.R|Testing/testing_coord_features.R

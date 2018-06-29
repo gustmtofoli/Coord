@@ -5,17 +5,34 @@ library(DT)
 
 header <- dashboardHeader(
   title = "Moon",
-  titleWidth = 187
+  titleWidth = 187,
+  dropdownMenu(type = "notifications",
+               notificationItem(
+                 text = "calculating 'TOTAL' in 'Results'",
+                 icon = icon("th"),
+                 status = "success"
+               ),
+               notificationItem(
+                 text = "Centroid's diameter = 0.5",
+                 icon = icon("th"),
+                 status = "success"
+               ),
+               notificationItem(
+                 text = "Fuc**g crazy map. Try the zoom.",
+                 icon = icon("map"),
+                 status = "success"
+               )
+  )
+  
 )
 
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Coord", tabName = "coord", badgeLabel = c("In progress"), badgeColor = "red"),
-    # menuItem("Indicators", tabName = "indicators", badgeLabel = "In progress", badgeColor = "red"),
-    menuItem("Maps", tabName = "maps", badgeLabel = "New", badgeColor = "green"),
-    menuItem("Charts", tabName = "charts", badgeLabel = "New", badgeColor = "green"),
-    menuItem("Summary", tabName = "summary", badgeLabel = "New", badgeColor = "green")
+    menuItem("Coord", tabName = "coord", badgeLabel = c("Updated"), badgeColor = "green"),
+    menuItem("Maps",  tabName = "maps", badgeLabel = "Updated", badgeColor = "green"),
+    menuItem("Charts", tabName = "charts", badgeLabel = "In Progress", badgeColor = "red"),
+    menuItem("Summary", tabName = "summary", badgeLabel = "In Progress", badgeColor = "red")
    
   )
 )
@@ -107,7 +124,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
-          width = 12,
+          width = 6,
           leafletOutput("map_sp", height="650")
         ),
         
@@ -115,7 +132,8 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Centroids location", 
           status = "info",
-          leafletOutput("map_grid", width="300", height="300")
+          width = 6,
+          leafletOutput("map_grid", height="650")
         )
         
         # box(
