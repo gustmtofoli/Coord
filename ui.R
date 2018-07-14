@@ -5,25 +5,7 @@ library(DT)
 
 header <- dashboardHeader(
   title = "Moon",
-  titleWidth = 187,
-  dropdownMenu(type = "notifications",
-               notificationItem(
-                 text = "calculating 'TOTAL' in 'Results'",
-                 icon = icon("th"),
-                 status = "success"
-               ),
-               notificationItem(
-                 text = "Centroid's diameter = 0.5",
-                 icon = icon("th"),
-                 status = "success"
-               ),
-               notificationItem(
-                 text = "Fuc**g crazy map. Try the zoom.",
-                 icon = icon("map"),
-                 status = "success"
-               )
-  )
-  
+  titleWidth = 187
 )
 
 
@@ -100,7 +82,8 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Results", 
           status = "warning",
-          DT::dataTableOutput("result")
+          DT::dataTableOutput("result"),
+          downloadButton("download_results", "Download")
         )
       )
     ),
