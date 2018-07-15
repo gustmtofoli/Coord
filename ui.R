@@ -84,6 +84,7 @@ body <- dashboardBody(
           status = "warning",
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
+          # actionButton("download_results", "Download")
         )
       )
     ),
