@@ -119,14 +119,6 @@ body <- dashboardBody(
           width = 6,
           leafletOutput("map_grid", height="650")
         )
-        
-        # box(
-        #   collapsible = TRUE,
-        #   title = "map test",
-        #   status = "info",
-        #   width = 12,
-        #   leafletOutput("map_test",height = 650)
-        # )
       )
     ),
 
@@ -134,6 +126,14 @@ body <- dashboardBody(
       "charts",
       fluidRow(
         box(
+          width = 4,
+          collapsible = TRUE,
+          status = "success",
+          title = "Configurations",
+          uiOutput("chart_checkbox")
+        ),
+        box(
+          width = 8,
           collapsible = TRUE,
           title = "Sp Scatter plot", 
           status = "warning",

@@ -109,14 +109,29 @@ function(input, output, session) {
       grid <- input$file1
       sp <- input$file2
 
-       sp_read <- read.csv(sp$datapath, header = input$header,
+      sp_read <- read.csv(sp$datapath, header = input$header,
                           sep = input$sep, quote = input$quote)
 
       grid_read <- read.csv(grid$datapath, header = input$header,
                             sep = input$sep, quote = input$quote)
-      
-      ggplot(data = sp_read, aes(x = lat, y = lon)) +
-          geom_point(aes(color = sp))
+      if (!is.null(input$chart_check)) {
+        data_sp <- subset(sp_read, sp_read$sp == input$chart_check)
+        ggplot(data = data_sp, aes(x = lat, y = lon)) +
+            geom_point(aes(color = data_sp$sp))
+      }
+    }
+  })
+  
+  output$chart_checkbox <- renderUI({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      grid <- input$file1
+      sp <- input$file2
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      checkboxGroupInput("chart_check", label = "Species to show:", choices = unique(sp_read$sp))
+    
     }
   })
   
