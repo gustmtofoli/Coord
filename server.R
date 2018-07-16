@@ -87,7 +87,7 @@ function(input, output, session) {
   })
   
   output$download_results <- downloadHandler(
-    filename = function(){"name.csv"},
+    filename = function(){"results.csv"},
     content = function(fname){
       write.csv(generate_result(), fname)
     }
@@ -130,8 +130,8 @@ function(input, output, session) {
                           sep = input$sep, quote = input$quote)
       grid_read <- read.csv(grid$datapath, header = input$header,
                             sep = input$sep, quote = input$quote)
-      checkboxGroupInput("chart_check", label = "Species to show:", choices = unique(sp_read$sp))
-    
+      checkboxGroupInput("chart_check", label = "Species to show:", choices = unique(sp_read$sp), selected = unique(sp_read$sp))
+      
     }
   })
   
@@ -152,6 +152,7 @@ function(input, output, session) {
         addCircleMarkers(
           lng = grid_read$lon,
           lat = grid_read$lat,
+          popup = paste("lon:", grid_read$lon, ", lat:", grid_read$lat),
           radius = 7,
           color = "blue",
           stroke = FALSE, fillOpacity = 0.3
@@ -174,7 +175,7 @@ function(input, output, session) {
         addCircleMarkers(
           lng = sp_read$lon,
           lat = sp_read$lat,
-          popup = sp_read$sp,
+          popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
           radius = 7,
           color = "green",
           stroke = FALSE, fillOpacity = 0.3
