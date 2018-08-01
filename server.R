@@ -4,6 +4,7 @@ library(dplyr)
 library(shiny)
 library(DT)
 library(ggplot2)
+library(plotly)
 
 function(input, output, session) {
   
@@ -103,35 +104,17 @@ function(input, output, session) {
     }
   })
   
-  
-  output$scatter_plot <- renderPlot({
+  output$scatter_plot <- renderPlotly({
     if (!is.null(input$file2) & !is.null(input$file1)) {
       grid <- input$file1
       sp <- input$file2
-
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      if (!is.null(input$chart_check)) {
-        data_sp <- subset(sp_read, sp_read$sp == input$chart_check)
-        ggplot(data = data_sp, aes(x = lat, y = lon)) +
-            geom_point(aes(color = data_sp$sp))
-      }
-    }
-  })
-  
-  output$chart_checkbox <- renderUI({
-    if (!is.null(input$file2) & !is.null(input$file1)) {
-      grid <- input$file1
-      sp <- input$file2
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      checkboxGroupInput("chart_check", label = "Species to show:", choices = unique(sp_read$sp), selected = unique(sp_read$sp))
       
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      plot_ly(data = sp_read, x = ~lat, y = ~lon, color = ~sp)
     }
   })
   
@@ -156,7 +139,7 @@ function(input, output, session) {
           radius = 7,
           color = "blue",
           stroke = FALSE, fillOpacity = 0.3
-        ) 
+        )
     }
   })
   
@@ -172,14 +155,27 @@ function(input, output, session) {
         addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
                          options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
         setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
-        addCircleMarkers(
-          lng = sp_read$lon,
-          lat = sp_read$lat,
-          popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
-          radius = 7,
-          color = "green",
-          stroke = FALSE, fillOpacity = 0.3
-        )
+        addMarkers(
+          data = sp_read,
+          label=~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)), 
+          clusterOptions = markerClusterOptions()
+        ) %>%
+        addLabelOnlyMarkers(data = sp_read,
+                            lng = ~lon, lat = ~lat,
+                            # label = ~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
+                            clusterOptions = markerClusterOptions()
+                            # labelOptions = labelOptions(noHide = T,
+                                                        # direction = "auto")
+                            )
+        # addCircleMarkers(
+        #   lng = sp_read$lon,
+        #   lat = sp_read$lat,
+        #   popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
+        #   radius = 7,
+        #   color = "green",
+        #   stroke = FALSE, fillOpacity = 0.3
+        # )
+        
     }
   })
   

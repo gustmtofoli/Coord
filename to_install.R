@@ -27,3 +27,7 @@ install.packages('rgdal')
 install.packages('sf')
 install.packages('rgeos')
 install.packages('geojsonio')
+
+install.packages('openssl')
+install.packages('httr')
+install.packages('plotly')

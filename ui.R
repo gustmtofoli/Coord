@@ -125,18 +125,11 @@ body <- dashboardBody(
       "charts",
       fluidRow(
         box(
-          width = 4,
-          collapsible = TRUE,
-          status = "success",
-          title = "Configurations",
-          uiOutput("chart_checkbox")
-        ),
-        box(
-          width = 8,
+          width = 12,
           collapsible = TRUE,
           title = "Sp Scatter plot", 
           status = "warning",
-          plotOutput("scatter_plot")
+          plotlyOutput("scatter_plot")
         )
       )
     )
