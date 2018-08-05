@@ -8,14 +8,24 @@ library(plotly)
 
 function(input, output, session) {
   
+  remove_species_outliers = function(species, bacias) {
+    species <- subset(species, species$lon >= min(bacias$lon) 
+                             & species$lon <= max(bacias$lon)
+                             & species$lat >= min(bacias$lat) 
+                             & species$lat <= max(bacias$lat))
+    species
+  }
+  
   generate_result = function() {
     grid <- input$file1
     sp <- input$file2
     
     grid_read <- read.csv(grid$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote) 
+                          sep = input$sep, quote = input$quote)
     sp_read <- read.csv(sp$datapath, header = input$header,
-                        sep = input$sep, quote = input$quote) 
+                        sep = input$sep, quote = input$quote)
+    
+    sp_read <- remove_species_outliers(sp_read, grid_read)
     
     sp_freq <- count(sp_read, sp_read$sp)
     
@@ -76,16 +86,21 @@ function(input, output, session) {
     if (!is.null(input$file2)) {
       sp <- input$file2
       sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote) 
-      data.frame(sp_read)
+                          sep = input$sep, quote = input$quote)
+      remove_species_outliers(sp_read, grid_read)
+      
     }
   })
   
-  output$result <- DT::renderDataTable({
+  
+  observeEvent(input$generate_results, {
     if (!is.null(input$file1) & !is.null(input$file2)) {
-      generate_result()      
+      output$result <- DT::renderDataTable({
+        generate_result()      
+      })
     }
   })
+  
   
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
@@ -104,6 +119,38 @@ function(input, output, session) {
     }
   })
   
+  output$species_outliers <- DT::renderDataTable(({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp <- input$file2
+      grid <- input$file1
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      subset(sp_read, sp_read$lon < min(grid_read$lon) 
+                        | sp_read$lon > max(grid_read$lon)
+                        | sp_read$lat < min(grid_read$lat) 
+                        | sp_read$lat > max(grid_read$lat))
+    }
+  }))
+  
+  output$species_outliers_freq <- DT::renderDataTable(({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp <- input$file2
+      grid <- input$file1
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      sp_subset <- subset(sp_read, sp_read$lon < min(grid_read$lon) 
+             | sp_read$lon > max(grid_read$lon)
+             | sp_read$lat < min(grid_read$lat) 
+             | sp_read$lat > max(grid_read$lat))
+      df_freq <- count(sp_subset, sp_subset$sp)
+      data.frame(Specie = df_freq$`sp_subset$sp`, Freq = df_freq$n)
+    }
+  }))
+  
   output$scatter_plot <- renderPlotly({
     if (!is.null(input$file2) & !is.null(input$file1)) {
       grid <- input$file1
@@ -114,17 +161,19 @@ function(input, output, session) {
       
       grid_read <- read.csv(grid$datapath, header = input$header,
                             sep = input$sep, quote = input$quote)
-      plot_ly(data = sp_read, x = ~lat, y = ~lon, color = ~sp)
+      
+      sp_read_subset <- remove_species_outliers(sp_read, grid_read)
+      
+      
+      plot_ly(data = sp_read_subset, x = ~lat, y = ~lon, color = ~sp)
     }
   })
   
   output$map_grid <- renderLeaflet({
     if (!is.null(input$file1)) {
       grid <- input$file1
-      # sp <- input$file2
       grid_read <- read.csv(grid$datapath, header = input$header,
                               sep = input$sep, quote = input$quote)
-      grid_read
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -144,10 +193,16 @@ function(input, output, session) {
   })
   
   output$map_sp <- renderLeaflet({
-    if (!is.null(input$file2)) {
+    if (!is.null(input$file2) & !is.null(input$file1)) {
       sp <- input$file2
+      grid <- input$file1
       sp_read <- read.csv(sp$datapath, header = input$header,
                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      
+      sp_read <- remove_species_outliers(sp_read, grid_read)
+      
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -155,27 +210,49 @@ function(input, output, session) {
         addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
                          options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
         setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
-        addMarkers(
+        addCircleMarkers(
           data = sp_read,
-          label=~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)), 
-          clusterOptions = markerClusterOptions()
-        ) %>%
-        addLabelOnlyMarkers(data = sp_read,
-                            lng = ~lon, lat = ~lat,
-                            # label = ~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
-                            clusterOptions = markerClusterOptions()
-                            # labelOptions = labelOptions(noHide = T,
-                                                        # direction = "auto")
-                            )
-        # addCircleMarkers(
-        #   lng = sp_read$lon,
-        #   lat = sp_read$lat,
-        #   popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
-        #   radius = 7,
-        #   color = "green",
-        #   stroke = FALSE, fillOpacity = 0.3
-        # )
+          lng = sp_read$lon,
+          lat = sp_read$lat,
+          popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
+          radius = 7,
+          color = "orange",
+          stroke = FALSE, fillOpacity = 0.3
+        )
         
+    }
+  })
+  
+  output$map_sp_clustered <- renderLeaflet({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp <- input$file2
+      grid <- input$file1
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      
+      sp_read <- remove_species_outliers(sp_read, grid_read)
+      
+      leaflet() %>%
+        addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+        addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+        addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+        addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
+                         options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+        setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
+      addMarkers(
+        data = sp_read,
+        label=~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
+        clusterOptions = markerClusterOptions()
+      ) %>%
+      addLabelOnlyMarkers(data = sp_read,
+                          lng = ~lon, lat = ~lat,
+                          # label = ~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
+                          clusterOptions = markerClusterOptions()
+                          # labelOptions = labelOptions(noHide = T,
+                                                      # direction = "auto")
+                          )
     }
   })
   

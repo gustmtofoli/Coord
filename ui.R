@@ -1,6 +1,7 @@
 library(shinydashboard)
 library(leaflet)
 library(DT)
+library(plotly)
 
 
 header <- dashboardHeader(
@@ -83,6 +84,7 @@ body <- dashboardBody(
           title = "Results", 
           status = "warning",
           DT::dataTableOutput("result"),
+          actionButton("generate_results", "Run"),
           downloadButton("download_results", "Download")
         )
       )
@@ -93,9 +95,21 @@ body <- dashboardBody(
       fluidRow(
         box(
           collapsible = TRUE,
-          title = "Species", 
+          title = "Species Frequency", 
           status = "success",
           DT::dataTableOutput("species")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Species Outliers", 
+          status = "success",
+          DT::dataTableOutput("species_outliers")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Species Outliers Frequency", 
+          status = "success",
+          DT::dataTableOutput("species_outliers_freq")
         )
       )
     ),
@@ -117,6 +131,14 @@ body <- dashboardBody(
           status = "info",
           width = 6,
           leafletOutput("map_grid", height="650")
+        ),
+        
+        box(
+          collapsible = TRUE,
+          title = "Species location - clustered", 
+          status = "info",
+          width = 12,
+          leafletOutput("map_sp_clustered", height="650")
         )
       )
     ),
