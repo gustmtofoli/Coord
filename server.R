@@ -16,6 +16,37 @@ function(input, output, session) {
     species
   }
   
+  get_species_freq = function() {
+    if (!is.null(input$file2)) {
+      sp <- input$file2
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      df_freq <- count(sp_read, sp_read$sp)
+      data.frame(Specie = df_freq$`sp_read$sp`, Freq = df_freq$n)
+    }
+  }
+  
+  get_species_outliers = function() {
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp <- input$file2
+      grid <- input$file1
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      subset(sp_read, sp_read$lon < min(grid_read$lon) 
+             | sp_read$lon > max(grid_read$lon)
+             | sp_read$lat < min(grid_read$lat) 
+             | sp_read$lat > max(grid_read$lat))
+    }
+  }
+  
+  get_species_outliers_freq = function() {
+    sp_out <- get_species_outliers()
+    df_freq <- count(sp_out, sp_out$sp)
+    data.frame(Specie = df_freq$`sp_out$sp`, Freq = df_freq$n)
+  }
+  
   generate_result = function() {
     grid <- input$file1
     sp <- input$file2
@@ -73,6 +104,8 @@ function(input, output, session) {
   }
   
   
+  # =====================================================================================
+  
   output$grid <- DT::renderDataTable({
     if (!is.null(input$file1)) {
       grid <- input$file1
@@ -83,21 +116,38 @@ function(input, output, session) {
   })
   
   output$sp <- DT::renderDataTable({
-    if (!is.null(input$file2)) {
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      grid <- input$file1
       sp <- input$file2
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
       sp_read <- read.csv(sp$datapath, header = input$header,
                           sep = input$sep, quote = input$quote)
       remove_species_outliers(sp_read, grid_read)
-      
     }
   })
   
-  
-  observeEvent(input$generate_results, {
+  output$result <- DT::renderDataTable({
     if (!is.null(input$file1) & !is.null(input$file2)) {
-      output$result <- DT::renderDataTable({
-        generate_result()      
-      })
+      grid <- input$file1
+      sp <- input$file2
+      grid_read <- read.csv(grid$datapath, header = input$header,
+                            sep = input$sep, quote = input$quote)
+      sp_read <- read.csv(sp$datapath, header = input$header,
+                          sep = input$sep, quote = input$quote)
+      if ((nrow(sp_read)*nrow(grid_read) <= 100000)) {
+        generate_result()
+      }
+      else {
+        showModal(modalDialog(
+          title = "Hey",
+          easyClose = TRUE,
+          footer = NULL,
+          "There are too many rows in those data. It would take a lot of time with the current hardware.",
+          br(),
+          "But you still can analyze your data normally."
+        ))
+      }
     }
   })
   
@@ -105,33 +155,45 @@ function(input, output, session) {
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
     content = function(fname){
-      write.csv(generate_result(), fname)
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(generate_result(), fname)
+      }
+    }
+  )
+
+  output$download_species_freq <- downloadHandler(
+    filename = function(){"species_freq.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(get_species_freq(), fname)
+      }
+    }
+  )
+  
+  output$download_species_outliers <- downloadHandler(
+    filename = function(){"species_outliers.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(get_species_outliers(), fname)
+      }
+    }
+  )
+  
+  output$download_species_outliers_freq <- downloadHandler(
+    filename = function(){"species_outliers_freq.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(get_species_outliers_freq(), fname)
+      }
     }
   )
   
   output$species <- DT::renderDataTable({
-    if (!is.null(input$file2)) {
-      sp <- input$file2
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      df_freq <- count(sp_read, sp_read$sp)
-      data.frame(Specie = df_freq$`sp_read$sp`, Freq = df_freq$n)
-    }
+    get_species_freq()
   })
   
   output$species_outliers <- DT::renderDataTable(({
-    if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp <- input$file2
-      grid <- input$file1
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      subset(sp_read, sp_read$lon < min(grid_read$lon) 
-                        | sp_read$lon > max(grid_read$lon)
-                        | sp_read$lat < min(grid_read$lat) 
-                        | sp_read$lat > max(grid_read$lat))
-    }
+    get_species_outliers()
   }))
   
   output$species_outliers_freq <- DT::renderDataTable(({
@@ -248,11 +310,8 @@ function(input, output, session) {
       ) %>%
       addLabelOnlyMarkers(data = sp_read,
                           lng = ~lon, lat = ~lat,
-                          # label = ~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
                           clusterOptions = markerClusterOptions()
-                          # labelOptions = labelOptions(noHide = T,
-                                                      # direction = "auto")
-                          )
+      )
     }
   })
   

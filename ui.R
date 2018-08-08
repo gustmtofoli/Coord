@@ -12,10 +12,10 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Coord", tabName = "coord", badgeLabel = c("Updated"), badgeColor = "green"),
-    menuItem("Maps",  tabName = "maps", badgeLabel = "Updated", badgeColor = "green"),
-    menuItem("Charts", tabName = "charts", badgeLabel = "In Progress", badgeColor = "red"),
-    menuItem("Summary", tabName = "summary", badgeLabel = "In Progress", badgeColor = "red")
+    menuItem("Coord", tabName = "coord"),
+    menuItem("Maps",  tabName = "maps"),
+    menuItem("Charts", tabName = "charts"),
+    menuItem("Summary", tabName = "summary")
    
   )
 )
@@ -84,7 +84,6 @@ body <- dashboardBody(
           title = "Results", 
           status = "warning",
           DT::dataTableOutput("result"),
-          actionButton("generate_results", "Run"),
           downloadButton("download_results", "Download")
         )
       )
@@ -97,19 +96,22 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species Frequency", 
           status = "success",
-          DT::dataTableOutput("species")
+          DT::dataTableOutput("species"),
+          downloadButton("download_species_freq", "Download")
         ),
         box(
           collapsible = TRUE,
           title = "Species Outliers", 
           status = "success",
-          DT::dataTableOutput("species_outliers")
+          DT::dataTableOutput("species_outliers"),
+          downloadButton("download_species_outliers", "Download")
         ),
         box(
           collapsible = TRUE,
           title = "Species Outliers Frequency", 
           status = "success",
-          DT::dataTableOutput("species_outliers_freq")
+          DT::dataTableOutput("species_outliers_freq"),
+          downloadButton("download_species_outliers_freq", "Download")
         )
       )
     ),
