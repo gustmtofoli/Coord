@@ -7,20 +7,47 @@ library(ggplot2)
 library(plotly)
 
 function(input, output, session) {
+
+  variables <- reactiveValues(grid_read = NULL, sp_read = NULL, sp_without_outliers = NULL, results = NULL)
   
-  remove_species_outliers = function(species, bacias) {
-    species <- subset(species, species$lon >= min(bacias$lon) 
-                             & species$lon <= max(bacias$lon)
-                             & species$lat >= min(bacias$lat) 
-                             & species$lat <= max(bacias$lat))
-    species
+  observeEvent(input$file1, {
+    if (!is.null(input$file1)) {
+      grid <- input$file1
+      variables$grid_read <- read.csv(grid$datapath, header = input$header,
+                                    sep = input$sep, quote = input$quote)
+    }
+  })
+  
+  observeEvent(input$file2, {
+    if (!is.null(input$file2)) {
+      sp <- input$file2
+      variables$sp_read <- read.csv(sp$datapath, header = input$header,
+                                    sep = input$sep, quote = input$quote)
+    }
+  })
+  
+  observeEvent(variables$sp_read, {
+    if (!is.null(variables$sp_read) & !is.null(variables$grid_read)) {
+      variables$sp_without_outliers <- remove_species_outliers(variables$grid_read, variables$sp_read)
+    }
+  })
+  
+  observeEvent(variables$sp_without_outliers, {
+    if (!is.null(variables$grid_read) & !is.null(variables$sp_without_outliers)) {
+      variables$results <- get_results(variables$grid_read, variables$sp_without_outliers)
+    }
+  })
+  
+  remove_species_outliers = function(grid_read, sp_read) {
+    subset(sp_read, sp_read$lon >= min(grid_read$lon) 
+                             & sp_read$lon <= max(grid_read$lon)
+                             & sp_read$lat >= min(grid_read$lat) 
+                             & sp_read$lat <= max(grid_read$lat))
   }
   
   get_species_freq = function() {
     if (!is.null(input$file2)) {
-      sp <- input$file2
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
+      sp_read <- variables$sp_read
       df_freq <- count(sp_read, sp_read$sp)
       data.frame(Specie = df_freq$`sp_read$sp`, Freq = df_freq$n)
     }
@@ -28,12 +55,8 @@ function(input, output, session) {
   
   get_species_outliers = function() {
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp <- input$file2
-      grid <- input$file1
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
+      sp_read <- variables$sp_read
+      grid_read <- variables$grid_read
       subset(sp_read, sp_read$lon < min(grid_read$lon) 
              | sp_read$lon > max(grid_read$lon)
              | sp_read$lat < min(grid_read$lat) 
@@ -47,16 +70,8 @@ function(input, output, session) {
     data.frame(Specie = df_freq$`sp_out$sp`, Freq = df_freq$n)
   }
   
-  generate_result = function() {
-    grid <- input$file1
-    sp <- input$file2
-    
-    grid_read <- read.csv(grid$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-    sp_read <- read.csv(sp$datapath, header = input$header,
-                        sep = input$sep, quote = input$quote)
-    
-    sp_read <- remove_species_outliers(sp_read, grid_read)
+  get_results = function(grid_read, sp_read) {
+    sp_read <- variables$sp_without_outliers
     
     sp_freq <- count(sp_read, sp_read$sp)
     
@@ -108,45 +123,32 @@ function(input, output, session) {
   
   output$grid <- DT::renderDataTable({
     if (!is.null(input$file1)) {
-      grid <- input$file1
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      grid_read
+      variables$grid_read
     }
   })
   
   output$sp <- DT::renderDataTable({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      grid <- input$file1
-      sp <- input$file2
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      remove_species_outliers(sp_read, grid_read)
+      variables$sp_without_outliers
     }
   })
   
   output$result <- DT::renderDataTable({
     if (!is.null(input$file1) & !is.null(input$file2)) {
-      grid <- input$file1
-      sp <- input$file2
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      if ((nrow(sp_read)*nrow(grid_read) <= 100000)) {
-        generate_result()
+      if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
+        # generate_result(variables$grid_read, variables$sp_read)
+        variables$results
       }
       else {
         showModal(modalDialog(
           title = "Hey",
           easyClose = TRUE,
           footer = NULL,
-          "There are too many rows in those data. It would take a lot of time with the current hardware.",
+          "There are too many rows in those data. It would take a lot of time to generate the resultswith the current hardware.",
           br(),
           "But you still can analyze your data normally."
         ))
+        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can analyze your data normally."))
       }
     }
   })
@@ -156,7 +158,7 @@ function(input, output, session) {
     filename = function(){"results.csv"},
     content = function(fname){
       if (!is.null(input$file2) & !is.null(input$file1)) {
-        write.csv(generate_result(), fname)
+        write.csv(variables$results, fname)
       }
     }
   )
@@ -198,12 +200,8 @@ function(input, output, session) {
   
   output$species_outliers_freq <- DT::renderDataTable(({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp <- input$file2
-      grid <- input$file1
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
+      grid_read <- variables$grid_read
+      sp_read <- variables$sp_read
       sp_subset <- subset(sp_read, sp_read$lon < min(grid_read$lon) 
              | sp_read$lon > max(grid_read$lon)
              | sp_read$lat < min(grid_read$lat) 
@@ -215,27 +213,15 @@ function(input, output, session) {
   
   output$scatter_plot <- renderPlotly({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      grid <- input$file1
-      sp <- input$file2
-      
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      
-      sp_read_subset <- remove_species_outliers(sp_read, grid_read)
-      
-      
-      plot_ly(data = sp_read_subset, x = ~lat, y = ~lon, color = ~sp)
+      sp_read <- variables$sp_without_outliers
+      grid_read <- variables$grid_read
+      plot_ly(data = sp_read, x = ~lat, y = ~lon, color = ~sp)
     }
   })
   
   output$map_grid <- renderLeaflet({
     if (!is.null(input$file1)) {
-      grid <- input$file1
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                              sep = input$sep, quote = input$quote)
+      grid_read <- variables$grid_read
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -256,14 +242,9 @@ function(input, output, session) {
   
   output$map_sp <- renderLeaflet({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp <- input$file2
-      grid <- input$file1
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                         sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
-      
-      sp_read <- remove_species_outliers(sp_read, grid_read)
+      # sp_read <- variables$sp_read
+      grid_read <- variables$grid_read
+      sp_read <- variables$sp_without_outliers
       
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -287,14 +268,10 @@ function(input, output, session) {
   
   output$map_sp_clustered <- renderLeaflet({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp <- input$file2
-      grid <- input$file1
-      sp_read <- read.csv(sp$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote)
-      grid_read <- read.csv(grid$datapath, header = input$header,
-                            sep = input$sep, quote = input$quote)
+      # sp_read <- variables$sp_read
+      grid_read <- variables$grid_read
       
-      sp_read <- remove_species_outliers(sp_read, grid_read)
+      sp_read <- variables$sp_without_outliers
       
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -314,8 +291,4 @@ function(input, output, session) {
       )
     }
   })
-  
-  
-
 }
-
