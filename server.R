@@ -33,7 +33,7 @@ function(input, output, session) {
   })
   
   observeEvent(variables$sp_without_outliers, {
-    if (!is.null(variables$grid_read) & !is.null(variables$sp_without_outliers)) {
+    if (!is.null(variables$grid_read) & !is.null(variables$sp_without_outliers) & (nrow(variables$sp_without_outliers)*nrow(variables$grid_read) <= 100000)) {
       variables$results <- get_results(variables$grid_read, variables$sp_without_outliers)
     }
   })
@@ -129,7 +129,8 @@ function(input, output, session) {
   
   output$sp <- DT::renderDataTable({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      variables$sp_without_outliers
+      remove_species_outliers(variables$grid_read, variables$sp_read)
+      # variables$sp_without_outliers
     }
   })
   
@@ -144,7 +145,7 @@ function(input, output, session) {
           title = "Hey",
           easyClose = TRUE,
           footer = NULL,
-          "There are too many rows in those data. It would take a lot of time to generate the resultswith the current hardware.",
+          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
           br(),
           "But you still can analyze your data normally."
         ))
