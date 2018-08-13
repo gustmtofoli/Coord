@@ -12,7 +12,12 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Coord", tabName = "coord"),
+    menuItem(
+      "Coord", 
+      tabName = "coord"
+    ),
+              
+    
     menuItem("Maps",  tabName = "maps"),
     menuItem("Charts", tabName = "charts"),
     menuItem("Summary", tabName = "summary")
@@ -76,8 +81,52 @@ body <- dashboardBody(
           dataTableOutput("sp")
         )
       ),
+      
+      fluidRow(
+        box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Species Frequency", 
+          status = "success",
+          DT::dataTableOutput("species"),
+          downloadButton("download_species_freq", "Download")
+        ),
+        box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Species Outliers", 
+          status = "success",
+          DT::dataTableOutput("species_outliers"),
+          downloadButton("download_species_outliers", "Download")
+        ),
+        box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Species Outliers Frequency", 
+          status = "success",
+          DT::dataTableOutput("species_outliers_freq"),
+          downloadButton("download_species_outliers_freq", "Download")
+        )
+        #  box(
+        #    width = 8,
+        #    collapsible = TRUE,
+        #    title = "Species per occurrence",
+        #    status = "warning",
+        #    DT::dataTableOutput("sp_per_occ")
+        # )
+      ),
   
       fluidRow(
+        # box(
+        #   width = 4,
+        #   collapsible = TRUE,
+        #   title = "Filter",
+        #   status = "warning",
+        #   sliderInput("range", "Occurrence range:",
+        #               min = 1, max = 1000,
+        #               value = c(200,500))
+        # ),
+        
         box(
           width = 12,
           collapsible = TRUE,
@@ -87,32 +136,47 @@ body <- dashboardBody(
           downloadButton("download_results", "Download")
         )
       )
+      
+      
+      
+      # fluidRow(
+      #   box(
+      #     width = 8,
+      #     collapsible = TRUE,
+      #     title = "Species per occurrence",
+      #     status = "warning",
+      #     plotlyOutput("dfdfds")
+      #   )
+      # )
     ),
+      
+    
+    
     
     tabItem(
       "summary",
       fluidRow(
-        box(
-          collapsible = TRUE,
-          title = "Species Frequency", 
-          status = "success",
-          DT::dataTableOutput("species"),
-          downloadButton("download_species_freq", "Download")
-        ),
-        box(
-          collapsible = TRUE,
-          title = "Species Outliers", 
-          status = "success",
-          DT::dataTableOutput("species_outliers"),
-          downloadButton("download_species_outliers", "Download")
-        ),
-        box(
-          collapsible = TRUE,
-          title = "Species Outliers Frequency", 
-          status = "success",
-          DT::dataTableOutput("species_outliers_freq"),
-          downloadButton("download_species_outliers_freq", "Download")
-        )
+        # box(
+        #   collapsible = TRUE,
+        #   title = "Species Frequency", 
+        #   status = "success",
+        #   DT::dataTableOutput("species"),
+        #   downloadButton("download_species_freq", "Download")
+        # ),
+        # box(
+        #   collapsible = TRUE,
+        #   title = "Species Outliers", 
+        #   status = "success",
+        #   DT::dataTableOutput("species_outliers"),
+        #   downloadButton("download_species_outliers", "Download")
+        # ),
+        # box(
+        #   collapsible = TRUE,
+        #   title = "Species Outliers Frequency", 
+        #   status = "success",
+        #   DT::dataTableOutput("species_outliers_freq"),
+        #   downloadButton("download_species_outliers_freq", "Download")
+        # )
       )
     ),
     

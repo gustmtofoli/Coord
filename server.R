@@ -154,7 +154,6 @@ function(input, output, session) {
     }
   })
   
-  
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
     content = function(fname){
