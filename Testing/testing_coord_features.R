@@ -217,4 +217,8 @@ df_res_sum_per_sp_bin["TOTAL", ] <- apply(df_res_sum_per_sp_bin, 2, sum)
 
 df_res_sum_per_sp_bin
 
+# =====================================================================
 
+
+results <- read.csv('results.csv')
+min(results[nrow(results), 2:ncol(results)])

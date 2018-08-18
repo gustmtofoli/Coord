@@ -138,7 +138,10 @@ function(input, output, session) {
     if (!is.null(input$file1) & !is.null(input$file2)) {
       if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
         # generate_result(variables$grid_read, variables$sp_read)
-        variables$results
+        results <- variables$results
+        print(results[nrow(results), 2:(ncol(results))-1])
+        # results[ ,  >= min(input$range)]
+        # results[ , results[nrow(results), 2:(ncol(results))] <= max(input$range)]
       }
       else {
         showModal(modalDialog(
@@ -154,6 +157,16 @@ function(input, output, session) {
     }
   })
   
+  output$filter_sp_occ <- renderUI({
+    results <- variables$results
+    if (!is.null(results)) {
+      total_occ_per_sp <- results[nrow(results), 2:ncol(results)-1]
+      sliderInput("range", "Occurrence range:",
+                  min = min(total_occ_per_sp), max = max(total_occ_per_sp),
+                  value = c(min(total_occ_per_sp), max(total_occ_per_sp)))
+    }
+  })
+  
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
     content = function(fname){
@@ -162,6 +175,7 @@ function(input, output, session) {
       }
     }
   )
+  
 
   output$download_species_freq <- downloadHandler(
     filename = function(){"species_freq.csv"},

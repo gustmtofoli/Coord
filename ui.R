@@ -82,31 +82,8 @@ body <- dashboardBody(
         )
       ),
       
-      fluidRow(
-        box(
-          width = 4,
-          collapsible = TRUE,
-          title = "Species Frequency", 
-          status = "success",
-          DT::dataTableOutput("species"),
-          downloadButton("download_species_freq", "Download")
-        ),
-        box(
-          width = 4,
-          collapsible = TRUE,
-          title = "Species Outliers", 
-          status = "success",
-          DT::dataTableOutput("species_outliers"),
-          downloadButton("download_species_outliers", "Download")
-        ),
-        box(
-          width = 4,
-          collapsible = TRUE,
-          title = "Species Outliers Frequency", 
-          status = "success",
-          DT::dataTableOutput("species_outliers_freq"),
-          downloadButton("download_species_outliers_freq", "Download")
-        )
+      # fluidRow(
+      
         #  box(
         #    width = 8,
         #    collapsible = TRUE,
@@ -114,27 +91,26 @@ body <- dashboardBody(
         #    status = "warning",
         #    DT::dataTableOutput("sp_per_occ")
         # )
-      ),
+      # ),
   
       fluidRow(
-        # box(
-        #   width = 4,
-        #   collapsible = TRUE,
-        #   title = "Filter",
-        #   status = "warning",
-        #   sliderInput("range", "Occurrence range:",
-        #               min = 1, max = 1000,
-        #               value = c(200,500))
-        # ),
+        box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Filter",
+          status = "warning",
+          uiOutput("filter_sp_occ")
+        ),
         
         box(
-          width = 12,
+          width = 8,
           collapsible = TRUE,
           title = "Results", 
           status = "warning",
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
         )
+        
       )
       
       
@@ -156,27 +132,27 @@ body <- dashboardBody(
     tabItem(
       "summary",
       fluidRow(
-        # box(
-        #   collapsible = TRUE,
-        #   title = "Species Frequency", 
-        #   status = "success",
-        #   DT::dataTableOutput("species"),
-        #   downloadButton("download_species_freq", "Download")
-        # ),
-        # box(
-        #   collapsible = TRUE,
-        #   title = "Species Outliers", 
-        #   status = "success",
-        #   DT::dataTableOutput("species_outliers"),
-        #   downloadButton("download_species_outliers", "Download")
-        # ),
-        # box(
-        #   collapsible = TRUE,
-        #   title = "Species Outliers Frequency", 
-        #   status = "success",
-        #   DT::dataTableOutput("species_outliers_freq"),
-        #   downloadButton("download_species_outliers_freq", "Download")
-        # )
+        box(
+          collapsible = TRUE,
+          title = "Species Frequency",
+          status = "success",
+          DT::dataTableOutput("species"),
+          downloadButton("download_species_freq", "Download")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Species Outliers",
+          status = "success",
+          DT::dataTableOutput("species_outliers"),
+          downloadButton("download_species_outliers", "Download")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Species Outliers Frequency",
+          status = "success",
+          DT::dataTableOutput("species_outliers_freq"),
+          downloadButton("download_species_outliers_freq", "Download")
+        )
       )
     ),
     
