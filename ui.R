@@ -160,6 +160,16 @@ body <- dashboardBody(
       "maps",
       fluidRow(
         box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Filter",
+          status = "warning",
+          uiOutput("filter_sp_map")
+        )
+      ),
+      
+      fluidRow(
+        box(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
@@ -179,7 +189,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location - clustered", 
           status = "info",
-          width = 12,
+          width = 6,
           leafletOutput("map_sp_clustered", height="650")
         )
       )

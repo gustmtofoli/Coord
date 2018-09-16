@@ -260,6 +260,8 @@ function(input, output, session) {
       grid_read <- variables$grid_read
       sp_read <- variables$sp_without_outliers
       
+      sp_selected <- subset(sp_read, sp == input$selec_filter_sp_map)
+      
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -268,10 +270,10 @@ function(input, output, session) {
                          options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
         setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
         addCircleMarkers(
-          data = sp_read,
-          lng = sp_read$lon,
-          lat = sp_read$lat,
-          popup = paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat),
+          data = sp_selected,
+          lng = sp_selected$lon,
+          lat = sp_selected$lat,
+          popup = paste(sp_selected$sp, "lon:", sp_selected$lon, ", lat:", sp_selected$lat),
           radius = 7,
           color = "orange",
           stroke = FALSE, fillOpacity = 0.3
@@ -287,6 +289,10 @@ function(input, output, session) {
       
       sp_read <- variables$sp_without_outliers
       
+      
+      
+      sp_selected <- subset(sp_read, sp == input$selec_filter_sp_map)
+      
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -295,14 +301,25 @@ function(input, output, session) {
                          options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
         setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
       addMarkers(
-        data = sp_read,
-        label=~as.character(paste(sp_read$sp, "lon:", sp_read$lon, ", lat:", sp_read$lat)),
+        data = sp_selected,
+        label=~as.character(paste(sp_selected$sp, "lon:", sp_selected$lon, ", lat:", sp_selected$lat)),
         clusterOptions = markerClusterOptions()
       ) %>%
-      addLabelOnlyMarkers(data = sp_read,
+      addLabelOnlyMarkers(data = sp_selected,
                           lng = ~lon, lat = ~lat,
                           clusterOptions = markerClusterOptions()
       )
+    }
+  })
+  
+  output$filter_sp_map <- renderUI({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp_read <- variables$sp_read
+      species_name <- unique(sp_read$sp)
+      print(species_name)
+      selectInput("selec_filter_sp_map", label = h4("Select specie"),
+                  choices = species_name,
+                  selected = 1)
     }
   })
 }
