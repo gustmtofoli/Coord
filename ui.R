@@ -12,14 +12,9 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem(
-      "Coord", 
-      tabName = "coord"
-    ),
-              
-    
-    menuItem("Maps",  tabName = "maps"),
-    menuItem("Charts", tabName = "charts"),
+    menuItem("Coord", tabName = "coord"),
+    menuItem("Explore Data", tabName = "maps"),
+    # menuItem("Charts", tabName = "charts"),
     menuItem("Summary", tabName = "summary")
    
   )
@@ -82,48 +77,24 @@ body <- dashboardBody(
         )
       ),
       
-      # fluidRow(
-      
-        #  box(
-        #    width = 8,
-        #    collapsible = TRUE,
-        #    title = "Species per occurrence",
-        #    status = "warning",
-        #    DT::dataTableOutput("sp_per_occ")
-        # )
-      # ),
-  
       fluidRow(
-        box(
-          width = 4,
-          collapsible = TRUE,
-          title = "Filter",
-          status = "warning",
-          uiOutput("filter_sp_occ")
-        ),
+        # box(
+        #   width = 4,
+        #   collapsible = TRUE,
+        #   title = "Filter",
+        #   status = "warning",
+        #   uiOutput("filter_sp_occ")
+        # ),
         
         box(
-          width = 8,
+          width = 12,
           collapsible = TRUE,
           title = "Results", 
           status = "warning",
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
         )
-        
       )
-      
-      
-      
-      # fluidRow(
-      #   box(
-      #     width = 8,
-      #     collapsible = TRUE,
-      #     title = "Species per occurrence",
-      #     status = "warning",
-      #     plotlyOutput("dfdfds")
-      #   )
-      # )
     ),
       
     
@@ -160,11 +131,23 @@ body <- dashboardBody(
       "maps",
       fluidRow(
         box(
-          width = 4,
+          width = 12,
           collapsible = TRUE,
           title = "Filter",
           status = "warning",
-          uiOutput("filter_sp_map")
+          uiOutput("filter_sp_map"),
+          actionButton("select_all_filter_btn", "Select all"),
+          actionButton("clean_all_filter_btn", "Clean")
+        )
+      ),
+      
+      fluidRow(
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Sp Scatter plot", 
+          status = "warning",
+          plotlyOutput("scatter_plot")
         )
       ),
       
@@ -179,32 +162,20 @@ body <- dashboardBody(
         
         box(
           collapsible = TRUE,
-          title = "Centroids location", 
-          status = "info",
-          width = 6,
-          leafletOutput("map_grid", height="650")
-        ),
-        
-        box(
-          collapsible = TRUE,
           title = "Species location - clustered", 
           status = "info",
           width = 6,
           leafletOutput("map_sp_clustered", height="650")
-        )
-      )
-    ),
-
-    tabItem(
-      "charts",
-      fluidRow(
+        ),
+        
         box(
-          width = 12,
           collapsible = TRUE,
-          title = "Sp Scatter plot", 
-          status = "warning",
-          plotlyOutput("scatter_plot")
+          title = "Centroids location", 
+          status = "info",
+          width = 6,
+          leafletOutput("map_grid", height="650")
         )
+       
       )
     )
   )

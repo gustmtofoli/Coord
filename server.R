@@ -10,6 +10,8 @@ function(input, output, session) {
 
   variables <- reactiveValues(grid_read = NULL, sp_read = NULL, sp_without_outliers = NULL, results = NULL)
   
+  filter_variables <- reactiveValues(sp_filter = NULL)
+  
   observeEvent(input$file1, {
     if (!is.null(input$file1)) {
       grid <- input$file1
@@ -139,7 +141,7 @@ function(input, output, session) {
       if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
         # generate_result(variables$grid_read, variables$sp_read)
         results <- variables$results
-        print(results[nrow(results), 2:(ncol(results))-1])
+        # print(results[nrow(results), 2:(ncol(results))-1])
         # results[ ,  >= min(input$range)]
         # results[ , results[nrow(results), 2:(ncol(results))] <= max(input$range)]
       }
@@ -157,15 +159,15 @@ function(input, output, session) {
     }
   })
   
-  output$filter_sp_occ <- renderUI({
-    results <- variables$results
-    if (!is.null(results)) {
-      total_occ_per_sp <- results[nrow(results), 2:ncol(results)-1]
-      sliderInput("range", "Occurrence range:",
-                  min = min(total_occ_per_sp), max = max(total_occ_per_sp),
-                  value = c(min(total_occ_per_sp), max(total_occ_per_sp)))
-    }
-  })
+  # output$filter_sp_occ <- renderUI({
+  #   results <- variables$results
+  #   if (!is.null(results)) {
+  #     total_occ_per_sp <- results[nrow(results), 2:ncol(results)-1]
+  #     sliderInput("range", "Occurrence range:",
+  #                 min = min(total_occ_per_sp), max = max(total_occ_per_sp),
+  #                 value = c(min(total_occ_per_sp), max(total_occ_per_sp)))
+  #   }
+  # })
   
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
@@ -228,8 +230,9 @@ function(input, output, session) {
   output$scatter_plot <- renderPlotly({
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_read <- variables$sp_without_outliers
+      sp_selected <- subset(sp_read, sp %in% input$selec_filter_sp_map)
       grid_read <- variables$grid_read
-      plot_ly(data = sp_read, x = ~lat, y = ~lon, color = ~sp)
+      plot_ly(data = sp_selected, x = ~lat, y = ~lon, color = ~sp)
     }
   })
   
@@ -260,7 +263,7 @@ function(input, output, session) {
       grid_read <- variables$grid_read
       sp_read <- variables$sp_without_outliers
       
-      sp_selected <- subset(sp_read, sp == input$selec_filter_sp_map)
+      sp_selected <- subset(sp_read, sp %in% input$selec_filter_sp_map)
       
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -289,9 +292,14 @@ function(input, output, session) {
       
       sp_read <- variables$sp_without_outliers
       
-      
-      
-      sp_selected <- subset(sp_read, sp == input$selec_filter_sp_map)
+      # print("-> subset species")
+      # print(input$selec_filter_sp_map)
+      print("-> sp_read")
+      print(sp_read)
+      print("-> subset - sp_read")
+      print(subset(sp_read, sp == input$selec_filter_sp_map, drop = FALSE))
+
+      sp_selected <- subset(sp_read, sp %in% input$selec_filter_sp_map, drop = FALSE)
       
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -316,11 +324,27 @@ function(input, output, session) {
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_read <- variables$sp_read
       species_name <- unique(sp_read$sp)
-      print(species_name)
       selectInput("selec_filter_sp_map", label = h4("Select specie"),
                   choices = species_name,
-                  selected = 1)
+                  selected = 1, multiple = TRUE)
     }
   })
+  
+  select_all_filter <- observeEvent(input$select_all_filter_btn, {
+    sp_read <- variables$sp_read
+    species_name = unique(sp_read$sp)
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+                      choices = species_name, 
+                      selected = species_name)
+  })
+  
+  clean_all_filter <- observeEvent(input$clean_all_filter_btn, {
+    sp_read <- variables$sp_read
+    species_name = unique(sp_read$sp)
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+                      choices = species_name, 
+                      selected = 1)
+  })
+  
 }
 
