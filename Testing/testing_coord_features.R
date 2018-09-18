@@ -220,5 +220,22 @@ df_res_sum_per_sp_bin
 # =====================================================================
 
 
-results <- read.csv('results.csv')
+results <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/results.csv')
+grid <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/grid.csv')
 min(results[nrow(results), 2:ncol(results)])
+
+# =====================================================================
+
+# todas as espécies com occ (com total)
+sp_occ_total <- results[, results[nrow(results), ] != 0]
+
+# todas as espécies com occ (sem total)
+sp_occ <- sp_occ[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)-1]
+
+# relaciona as occ com coordenadas da grid
+sp_occ$lon <- grid$lon
+sp_occ$lat <- grid$lat
+sp_occ
+
+
+

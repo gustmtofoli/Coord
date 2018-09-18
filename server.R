@@ -236,6 +236,25 @@ function(input, output, session) {
     }
   })
   
+  output$sp_freq_plot <- renderPlotly({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp_freq <- get_species_freq()
+      sp_selected <- subset(sp_freq, Specie %in% input$selec_filter_sp_map)
+      # grid_read <- variables$grid_read
+      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie)
+    }
+  })
+  
+  output$sp_out_freq_plot <- renderPlotly({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      sp_out_freq <- get_species_outliers_freq()
+      sp_selected <- subset(sp_out_freq, Specie %in% input$selec_filter_sp_map)
+      # grid_read <- variables$grid_read
+      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie)
+    }
+  })
+  
+  
   output$map_grid <- renderLeaflet({
     if (!is.null(input$file1)) {
       grid_read <- variables$grid_read

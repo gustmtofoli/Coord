@@ -145,9 +145,25 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Sp Scatter plot", 
+          title = "Sp Coordinates", 
           status = "warning",
           plotlyOutput("scatter_plot")
+        ),
+        
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Sp Frequency", 
+          status = "warning",
+          plotlyOutput("sp_freq_plot")
+        ), 
+        
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Sp Outliers", 
+          status = "warning",
+          plotlyOutput("sp_out_freq_plot")
         )
       ),
       
@@ -156,7 +172,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
-          width = 6,
+          width = 12,
           leafletOutput("map_sp", height="650")
         ),
         
@@ -164,7 +180,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location - clustered", 
           status = "info",
-          width = 6,
+          width =12,
           leafletOutput("map_sp_clustered", height="650")
         ),
         
