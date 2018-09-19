@@ -230,12 +230,35 @@ min(results[nrow(results), 2:ncol(results)])
 sp_occ_total <- results[, results[nrow(results), ] != 0]
 
 # todas as espécies com occ (sem total)
-sp_occ <- sp_occ[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)-1]
+sp_occ <- sp_occ_total[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)-1]
 
 # relaciona as occ com coordenadas da grid
 sp_occ$lon <- grid$lon
 sp_occ$lat <- grid$lat
 sp_occ
 
+sp_occ <- sp_occ[,2:ncol(sp_occ)]
 
+# -----------------------
+# OCC PER COORDINATES TO IMPLEMENT:
+# MAP OF SP OCC, SP OCC SCATTER PLOT, MULTIPLE SELECT FILTER, COORDINATES WITHOUT OCC,
+# SPECIES WITHOUT OCCURENCE, COORDINATES WITH > 1 OCC AND WHICH SPECIES, ...  
+results <- results[1:nrow(results)-1, 1:ncol(results)-1]
+results$lon <- grid$lon
+results$lat <- grid$lat
 
+subset(sp_occ, sp_occ$Bradypus.variegatus == 1)
+subset(sp_occ, sp_occ$teste == 1)
+
+# ================================================================
+# GRID BOUDARY TO DETECT PRETTY GOOD OUTLIERS
+grid_brasil <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/Ids_coord_bacias_csv.csv')
+
+x <- max(grid_brasil$lat) - min(grid_brasil$lat)
+y <- max(grid_brasil$lon) - min(grid_brasil$lon)
+
+library(raster)
+install.packages('qlcVisualize')
+library(qlcVisualize)
+
+boundary(grid_brasil)
