@@ -5,9 +5,9 @@ account: jupiter
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 349202
-bundleId: 1530156
+bundleId: 1590861
 url: https://jupiter.shinyapps.io/COORD/
-when: 1533993707.51298
+when: 1537237686.63121
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: Makefile|.RData|README.md|A_minor_Upgrade/Coord/server.R|A_minor_Upgrade/Coord/ui.R|Coord_web_v1/server.R|Coord_web_v1/teste-map.R|Coord_web_v1/ui.R|dependencies/to_install.R|resources/grid.csv|resources/Ids_coord_bacias_csv.csv|resources/Registros_spp_Modelagem_csv.csv|resources/sp.csv|Testing/testing_coord_features.R
+ignoredFiles: Makefile|.RData|README.md|A_minor_Upgrade/Coord/server.R|A_minor_Upgrade/Coord/ui.R|Coord_web_v1/server.R|Coord_web_v1/teste-map.R|Coord_web_v1/ui.R|dependencies/to_install.R|resources/grid.csv|resources/Ids_coord_bacias_csv.csv|resources/Registros_spp_Modelagem_csv.csv|resources/sp.csv|Testing/grid.csv|Testing/results.csv|Testing/testing_coord_features.R
