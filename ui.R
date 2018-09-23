@@ -94,6 +94,7 @@ body <- dashboardBody(
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
         )
+        
       )
     ),
       
@@ -192,7 +193,18 @@ body <- dashboardBody(
           leafletOutput("map_grid", height="650")
         )
        
+      ),
+      
+      fluidRow(
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Sp occ", 
+          status = "warning",
+          plotlyOutput("sp_occ_scatter_plot")
+        )
       )
+      
     )
   )
 )

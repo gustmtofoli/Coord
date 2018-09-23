@@ -117,7 +117,14 @@ function(input, output, session) {
     
     df_res_sum_per_sp_bin["TOTAL", ] <- apply(df_res_sum_per_sp_bin, 2, sum)
     
+    grid_read["-", ] <- "-"
+    
+    df_res_sum_per_sp_bin$lon <- grid_read$lon
+    
+    df_res_sum_per_sp_bin$lat <- grid_read$lat
+    
     df_res_sum_per_sp_bin
+    
   }
   
   
@@ -363,6 +370,50 @@ function(input, output, session) {
     updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
                       choices = species_name, 
                       selected = 1)
+  })
+  
+  output$sp_occ_scatter_plot <- renderPlotly({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      results <- variables$results
+      
+      sp_occ_total <- results[, results[nrow(results), ] != 0]
+      
+      sp_occ <- sp_occ_total[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)]
+      
+      sp_occ$X <- NULL
+      
+      sp_occ <- subset(sp_occ, TOTAL > 0)
+      sp_occ$TOTAL <- NULL
+      
+      sp_occ <- unique(sp_occ)
+      
+      a <- c()
+      for (i in 1:nrow(sp_occ)) {
+        a <- c(a, i)
+      }
+      
+      sp_occ$sp <-a 
+      
+      print(sp_occ)
+      
+      # results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
+      # 
+      # sp_occ[sp_occ$Bradypus.variegatus == 1, ]$sp <- 'Bradypus.variegatus'
+      # 
+      # sp_occ[sp_occ$teste == 1, ]$sp <- 'teste'
+      # 
+      # sp_occ <- subset(sp_occ, results_sp_names %in% input$selec_filter_sp_map)
+      # 
+      # sp_occ$sp <- input$selec_filter_sp_map
+      
+      
+      # sp_selected <- subset(results, results_sp_names %in% input$selec_filter_sp_map)
+      # grid_read <- variables$grid_read
+      
+      # results$sp_selected <- sp_selected
+      
+      plot_ly(data = sp_occ, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
+    }
   })
   
 }

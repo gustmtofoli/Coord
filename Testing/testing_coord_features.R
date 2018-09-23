@@ -222,36 +222,94 @@ df_res_sum_per_sp_bin
 
 results <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/results.csv')
 grid <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/grid.csv')
+sp <- read.csv('/home/gustavo/Desenvolvimento/Coord/resources/sp.csv')
 min(results[nrow(results), 2:ncol(results)])
 
+grid["-", ] <- "-"
+results$lon <- grid$lon
+results$lat <- grid$lat
+
+spp <- names(results)
+spp[2:4]
+spp[2:(length(spp)-3)]
+
 # =====================================================================
+results
 
 # todas as espécies com occ (com total)
 sp_occ_total <- results[, results[nrow(results), ] != 0]
 
 # todas as espécies com occ (sem total)
-sp_occ <- sp_occ_total[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)-1]
+sp_occ <- sp_occ_total[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)]
 
-# relaciona as occ com coordenadas da grid
-sp_occ$lon <- grid$lon
-sp_occ$lat <- grid$lat
 sp_occ
 
-sp_occ <- sp_occ[,2:ncol(sp_occ)]
+# names <- names(sp_occ)
+# names <- names[2:(length(names)-3)]
+
+sp_occ$X <- NULL
+
+sp_occ <- subset(sp_occ, TOTAL > 0)
+sp_occ$TOTAL <- NULL
+
+# sp_occ$teste <- NULL
+
+# sp_occ <- subset(sp_occ, sp_occ$Bradypus.variegatus == 1)
+
+# sp_occ[sp_occ$Bradypus.variegatus == 1, ]$Bradypus.variegatus <- 'Bradypus.variegatus'
+
+# sp_occ[sp_occ$teste == 1, ]$teste <- 'teste'
+
+# sp_occ
+
+sp_occ <- unique(sp_occ)
+
+a <- c()
+for (i in 1:nrow(sp_occ)) {
+  a <- c(a, i)
+}
+
+sp_occ$sp <-a 
+
+sp_occ
+
+sp_occ[sp_occ$Bradypus.variegatus == 1, ]$sp <- 'Bradypus.variegatus'
+
+sp_occ[sp_occ$teste == 1, ]$sp <- 'teste'
+
+
+
+sp_occ
+
+# sp_names <- subset(sp, sp %in% names)
+
+# sp_occ$Bradypus.variegatus <- NULL
+
+# sp_occ$sp <- c('Bradypus.variegatus')
+
+plot_ly(data = sp_occ, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
+
+
 
 # -----------------------
 # OCC PER COORDINATES TO IMPLEMENT:
 # MAP OF SP OCC, SP OCC SCATTER PLOT, MULTIPLE SELECT FILTER, COORDINATES WITHOUT OCC,
 # SPECIES WITHOUT OCCURENCE, COORDINATES WITH > 1 OCC AND WHICH SPECIES, ...  
-results <- results[1:nrow(results)-1, 1:ncol(results)-1]
-results$lon <- grid$lon
-results$lat <- grid$lat
 
-subset(sp_occ, sp_occ$Bradypus.variegatus == 1)
-subset(sp_occ, sp_occ$teste == 1)
+subset(results, results$Bradypus.variegatus == 1)
+df <- subset(results, results$teste == 1)
+df$X <- NULL
+df$TOTAL <- NULL
+df$teste2 <- NULL
+df$Bradypus.variegatus <- NULL
+
+df
+# df_t <- t(df)
+
+plot_ly(data = df, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
 
 # ================================================================
-# GRID BOUDARY TO DETECT PRETTY GOOD OUTLIERS
+# GRID BOUNDARY TO DETECT PRETTY GOOD OUTLIERS
 grid_brasil <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/Ids_coord_bacias_csv.csv')
 
 x <- max(grid_brasil$lat) - min(grid_brasil$lat)
@@ -261,4 +319,27 @@ library(raster)
 install.packages('qlcVisualize')
 library(qlcVisualize)
 
-boundary(grid_brasil)
+boundary(grid_brasil, density = 0.02, grid = 20, box.offset = 0.1, tightness = 7.5, plot = TRUE)
+b <- boundary(grid_brasil, density = 0.02, grid = 10, box.offset = 0.1, tightness = 7.5, plot = FALSE)
+df_b <- data.frame(b)
+
+
+
+sp_selected <- sp_occ
+
+leaflet() %>%
+  addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+  addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+  addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
+                   options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+  setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
+  addCircleMarkers(
+    data = sp_selected,
+    lng = as.numeric(sp_selected$lon),
+    lat = as.numeric(sp_selected$lat),
+    popup = paste(sp_selected$sp, ", lon:", sp_selected$lon, ", lat:", sp_selected$lat),
+    radius = 7,
+    color = "orange",
+    stroke = FALSE, fillOpacity = 0.3
+  )
