@@ -124,6 +124,18 @@ body <- dashboardBody(
           status = "success",
           DT::dataTableOutput("species_outliers_freq"),
           downloadButton("download_species_outliers_freq", "Download")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Duplicated records in species",
+          status = "success",
+          DT::dataTableOutput("duplicated_sp")
+        ),
+        box(
+          collapsible = TRUE,
+          title = "Duplicated coordinates in grid",
+          status = "success",
+          DT::dataTableOutput("duplicated_grid")
         )
       )
     ),
@@ -191,19 +203,27 @@ body <- dashboardBody(
           status = "info",
           width = 6,
           leafletOutput("map_grid", height="650")
+        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Centroids with occurence", 
+          status = "warning",
+          leafletOutput("map_grid_occ", height="650")
         )
        
-      ),
-      
-      fluidRow(
-        box(
-          width = 12,
-          collapsible = TRUE,
-          title = "Sp occ", 
-          status = "warning",
-          plotlyOutput("sp_occ_scatter_plot")
-        )
       )
+      
+      # fluidRow(
+      #   box(
+      #     width = 6,
+      #     collapsible = TRUE,
+      #     title = "Centroids with occurence", 
+      #     status = "warning",
+      #     leafletOutput("map_grid", height="650")
+      #   )
+      # )
       
     )
   )

@@ -10,6 +10,8 @@ function(input, output, session) {
 
   variables <- reactiveValues(grid_read = NULL, sp_read = NULL, sp_without_outliers = NULL, results = NULL)
   
+  secondary_variables <- reactiveValues(duplicated_sp = NULL, duplicated_grid = NULL)
+  
   filter_variables <- reactiveValues(sp_filter = NULL)
   
   observeEvent(input$file1, {
@@ -17,14 +19,18 @@ function(input, output, session) {
       grid <- input$file1
       variables$grid_read <- read.csv(grid$datapath, header = input$header,
                                     sep = input$sep, quote = input$quote)
+      secondary_variables$duplicated_grid <- variables$grid_read[duplicated(variables$grid_read), ]
+      variables$grid_read <- unique(variables$grid_read)
     }
   })
   
   observeEvent(input$file2, {
     if (!is.null(input$file2)) {
       sp <- input$file2
-      variables$sp_read <- read.csv(sp$datapath, header = input$header,
-                                    sep = input$sep, quote = input$quote)
+      variables$sp_read <- unique(read.csv(sp$datapath, header = input$header,
+                                    sep = input$sep, quote = input$quote))
+      secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
+      variables$sp_read <- unique(variables$sp_read)
     }
   })
   
@@ -313,18 +319,8 @@ function(input, output, session) {
   
   output$map_sp_clustered <- renderLeaflet({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      # sp_read <- variables$sp_read
       grid_read <- variables$grid_read
-      
       sp_read <- variables$sp_without_outliers
-      
-      # print("-> subset species")
-      # print(input$selec_filter_sp_map)
-      print("-> sp_read")
-      print(sp_read)
-      print("-> subset - sp_read")
-      print(subset(sp_read, sp == input$selec_filter_sp_map, drop = FALSE))
-
       sp_selected <- subset(sp_read, sp %in% input$selec_filter_sp_map, drop = FALSE)
       
       leaflet() %>%
@@ -394,6 +390,17 @@ function(input, output, session) {
       
       sp_occ$sp <-a 
       
+      # print(sp_occ)
+      
+      results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
+      
+      results_sp_names <- gsub(".", " ", results_sp_names, fixed = TRUE)
+      for (i in 1:length(results_sp_names)) {
+        sp_occ[sp_occ[ , i] == 1, ]$sp <- results_sp_names[i]
+      }
+      
+      
+      print("-> antes sp occ")
       print(sp_occ)
       
       # results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
@@ -402,10 +409,13 @@ function(input, output, session) {
       # 
       # sp_occ[sp_occ$teste == 1, ]$sp <- 'teste'
       # 
-      # sp_occ <- subset(sp_occ, results_sp_names %in% input$selec_filter_sp_map)
+      sp_occ <- subset(sp_occ, sp %in% input$selec_filter_sp_map)
       # 
       # sp_occ$sp <- input$selec_filter_sp_map
-      
+      # print("-> ", results_sp_names)
+      # print("-> ", input$selec_filter_sp_map)
+      print("-> depois sp occ")
+      print(sp_occ)
       
       # sp_selected <- subset(results, results_sp_names %in% input$selec_filter_sp_map)
       # grid_read <- variables$grid_read
@@ -415,6 +425,63 @@ function(input, output, session) {
       plot_ly(data = sp_occ, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
     }
   })
+  
+  output$map_grid_occ <- renderLeaflet({
+    if (!is.null(input$file2) & !is.null(input$file1)) {
+      results <- variables$results
+      
+      sp_occ_total <- results[, results[nrow(results), ] != 0]
+      
+      sp_occ <- sp_occ_total[1:nrow(sp_occ_total)-1, 1:ncol(sp_occ_total)]
+      
+      sp_occ$X <- NULL
+      
+      sp_occ <- subset(sp_occ, TOTAL > 0)
+      sp_occ$TOTAL <- NULL
+      
+      sp_occ <- unique(sp_occ)
+      
+      a <- c()
+      for (i in 1:nrow(sp_occ)) {
+        a <- c(a, i)
+      }
+      
+      sp_occ$sp <-a 
+      
+      results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
+      
+      results_sp_names <- gsub(".", " ", results_sp_names, fixed = TRUE)
+      for (i in 1:length(results_sp_names)) {
+        sp_occ[sp_occ[ , i] == 1, ]$sp <- results_sp_names[i]
+      }
+      
+      leaflet() %>%
+        addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+        addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+        addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+        addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
+                         options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+        setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
+        addCircleMarkers(
+          lng = as.numeric(sp_occ$lon),
+          lat = as.numeric(sp_occ$lat),
+          popup = paste(sp_occ$sp, ", lon:", sp_occ$lon, ", lat:", sp_occ$lat),
+          radius = 7,
+          color = "blue",
+          stroke = FALSE, fillOpacity = 0.3
+        )
+    }
+  })
+  
+  output$duplicated_sp <- DT::renderDataTable({
+    secondary_variables$duplicated_sp
+  })
+  
+  output$duplicated_grid <- DT::renderDataTable({
+    secondary_variables$duplicated_grid
+  })
+  
+  
   
 }
 

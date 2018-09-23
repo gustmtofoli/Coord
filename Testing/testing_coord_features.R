@@ -277,6 +277,10 @@ sp_occ[sp_occ$Bradypus.variegatus == 1, ]$sp <- 'Bradypus.variegatus'
 
 sp_occ[sp_occ$teste == 1, ]$sp <- 'teste'
 
+results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
+for (i in 1:length(results_sp_names)) {
+  sp_occ[sp_occ[ , i] == 1, ]$sp <- results_sp_names[i]
+}
 
 
 sp_occ
