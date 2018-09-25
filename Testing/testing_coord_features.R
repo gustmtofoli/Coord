@@ -327,9 +327,9 @@ boundary(grid_brasil, density = 0.02, grid = 20, box.offset = 0.1, tightness = 7
 b <- boundary(grid_brasil, density = 0.02, grid = 10, box.offset = 0.1, tightness = 7.5, plot = FALSE)
 df_b <- data.frame(b)
 
+library(leaflet)
 
-
-sp_selected <- sp_occ
+sp_selected <- sp_a_lot
 
 leaflet() %>%
   addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -347,3 +347,34 @@ leaflet() %>%
     color = "orange",
     stroke = FALSE, fillOpacity = 0.3
   )
+
+
+# ================================
+library(dplyr)
+
+sp_a_lot <- read.csv("/home/gustavo/Desenvolvimento/Coord/resources/Registros_spp_Modelagem_csv.csv")
+
+Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZ210b2ZvbGkiLCJhIjoiY2ptaDJrbnhqN2Q3MTN3b2dsbDIzcnR4YyJ9.dbW79tYM5wW8z7Po5nx7XA')
+p <- sp_a_lot %>%
+  plot_mapbox(lat = ~lat, lon = ~lon, 
+              split = ~sp,
+              mode = 'scattermapbox', hoverinfo='all') %>%
+  layout(title = 'Occurences', 
+         font = list(color='black'), 
+         # plot_bgcolor = '#191A1A', 
+         # paper_bgc_color = '#191A1A',
+         mapbox = list(style = 'dark'), 
+         legend = list(orientation = 'v',
+                      font = list(size = 8
+         )),
+        margin = list(l = 25, r = 25, 
+                      b = 25, t = 25, 
+                      pad = 2)
+        )
+
+# chart_link = api_create(p, filename="mapbox-multiple")
+p
+
+
+
+

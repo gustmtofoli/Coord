@@ -185,7 +185,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location", 
           status = "success",
-          width = 12,
+          width = 6,
           leafletOutput("map_sp", height="650")
         ),
         
@@ -193,7 +193,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Species location - clustered", 
           status = "info",
-          width =12,
+          width =6,
           leafletOutput("map_sp_clustered", height="650")
         ),
         

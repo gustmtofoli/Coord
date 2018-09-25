@@ -481,7 +481,5 @@ function(input, output, session) {
     secondary_variables$duplicated_grid
   })
   
-  
-  
 }
 
