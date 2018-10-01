@@ -220,7 +220,7 @@ df_res_sum_per_sp_bin
 # =====================================================================
 
 
-results <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/results.csv')
+results <- read.csv('/home/gustavo/Desenvolvimento/Coord/dev-tests/results.csv')
 grid <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/grid.csv')
 sp <- read.csv('/home/gustavo/Desenvolvimento/Coord/resources/sp.csv')
 min(results[nrow(results), 2:ncol(results)])
@@ -329,7 +329,20 @@ df_b <- data.frame(b)
 
 library(leaflet)
 
-sp_selected <- sp_a_lot
+sp_selected <- sp
+
+# pal <- colorNumeric(c("red", "green", "blue"), 1:10)
+# pal(c(1,6,9))
+
+# values <- unique(sp_selected$sp)
+colors <- colorRampPalette(palette()[2:length(palette())-1])(length(unique(sp_selected$sp)))
+pal <- colorFactor(colors, domain = unique(sp_selected$sp))
+
+## Use n equally spaced breaks to assign each value to n-1 equal sized bins 
+# ii <- cut(values, breaks = seq(min(values), max(values), len = len(values)),
+          # include.lowest = TRUE)
+## Use bin indices, ii, to select color from vector of n-1 equally spaced colors
+
 
 leaflet() %>%
   addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
@@ -338,13 +351,16 @@ leaflet() %>%
   addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
                    options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
   setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
+  addTiles() %>%
   addCircleMarkers(
     data = sp_selected,
     lng = as.numeric(sp_selected$lon),
     lat = as.numeric(sp_selected$lat),
-    popup = paste(sp_selected$sp, ", lon:", sp_selected$lon, ", lat:", sp_selected$lat),
+    label = paste(sp_selected$sp, ", lon:", sp_selected$lon, ", lat:", sp_selected$lat),
     radius = 7,
-    color = "orange",
+    color = ~pal(sp_selected$sp),
+    # group = 
+    # fillColor = ~pal,
     stroke = FALSE, fillOpacity = 0.3
   )
 

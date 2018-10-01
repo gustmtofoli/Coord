@@ -208,13 +208,12 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "Centroids with occurence", 
+          title = "Occurences", 
           status = "warning",
           leafletOutput("map_grid_occ", height="650")
         )
        
       )
-      
       # fluidRow(
       #   box(
       #     width = 6,

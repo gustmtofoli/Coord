@@ -27,8 +27,8 @@ function(input, output, session) {
   observeEvent(input$file2, {
     if (!is.null(input$file2)) {
       sp <- input$file2
-      variables$sp_read <- unique(read.csv(sp$datapath, header = input$header,
-                                    sep = input$sep, quote = input$quote))
+      variables$sp_read <- read.csv(sp$datapath, header = input$header,
+                                    sep = input$sep, quote = input$quote)
       secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
       variables$sp_read <- unique(variables$sp_read)
     }
@@ -144,8 +144,9 @@ function(input, output, session) {
   
   output$sp <- DT::renderDataTable({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      remove_species_outliers(variables$grid_read, variables$sp_read)
+      # remove_species_outliers(variables$grid_read, variables$sp_read)
       # variables$sp_without_outliers
+      variables$sp_read
     }
   })
   
@@ -254,7 +255,14 @@ function(input, output, session) {
       sp_freq <- get_species_freq()
       sp_selected <- subset(sp_freq, Specie %in% input$selec_filter_sp_map)
       # grid_read <- variables$grid_read
-      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie)
+      a <- list(
+        autotick = FALSE,
+        showticklabels = FALSE
+      )
+      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie) %>%
+        layout(
+          xaxis = a
+        )
     }
   })
   
@@ -262,8 +270,14 @@ function(input, output, session) {
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_out_freq <- get_species_outliers_freq()
       sp_selected <- subset(sp_out_freq, Specie %in% input$selec_filter_sp_map)
-      # grid_read <- variables$grid_read
-      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie)
+      a <- list(
+        autotick = FALSE,
+        showticklabels = FALSE
+      )
+      plot_ly(data = sp_selected, x = ~Specie, y = ~Freq, color = ~Specie) %>%
+        layout(
+          xaxis = a
+        )
     }
   })
   
@@ -281,7 +295,7 @@ function(input, output, session) {
         addCircleMarkers(
           lng = grid_read$lon,
           lat = grid_read$lat,
-          popup = paste("lon:", grid_read$lon, ", lat:", grid_read$lat),
+          label = paste("lon:", grid_read$lon, ", lat:", grid_read$lat),
           radius = 7,
           color = "blue",
           stroke = FALSE, fillOpacity = 0.3
@@ -297,6 +311,9 @@ function(input, output, session) {
       
       sp_selected <- subset(sp_read, sp %in% input$selec_filter_sp_map)
       
+      colors <- colorRampPalette(palette()[2:length(palette())-1])(length(unique(sp_selected$sp)))
+      pal <- colorFactor(colors, domain = unique(sp_selected$sp))
+      
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -308,9 +325,9 @@ function(input, output, session) {
           data = sp_selected,
           lng = sp_selected$lon,
           lat = sp_selected$lat,
-          popup = paste(sp_selected$sp, "lon:", sp_selected$lon, ", lat:", sp_selected$lat),
+          label = paste(sp_selected$sp, "lon:", sp_selected$lon, ", lat:", sp_selected$lat),
           radius = 7,
-          color = "orange",
+          color = ~pal(sp_selected$sp),
           stroke = FALSE, fillOpacity = 0.3
         )
         
@@ -390,8 +407,6 @@ function(input, output, session) {
       
       sp_occ$sp <-a 
       
-      # print(sp_occ)
-      
       results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
       
       results_sp_names <- gsub(".", " ", results_sp_names, fixed = TRUE)
@@ -399,35 +414,14 @@ function(input, output, session) {
         sp_occ[sp_occ[ , i] == 1, ]$sp <- results_sp_names[i]
       }
       
-      
-      print("-> antes sp occ")
-      print(sp_occ)
-      
-      # results_sp_names <- names(sp_occ)[1:(ncol(sp_occ)-3)]
-      # 
-      # sp_occ[sp_occ$Bradypus.variegatus == 1, ]$sp <- 'Bradypus.variegatus'
-      # 
-      # sp_occ[sp_occ$teste == 1, ]$sp <- 'teste'
-      # 
       sp_occ <- subset(sp_occ, sp %in% input$selec_filter_sp_map)
-      # 
-      # sp_occ$sp <- input$selec_filter_sp_map
-      # print("-> ", results_sp_names)
-      # print("-> ", input$selec_filter_sp_map)
-      print("-> depois sp occ")
-      print(sp_occ)
-      
-      # sp_selected <- subset(results, results_sp_names %in% input$selec_filter_sp_map)
-      # grid_read <- variables$grid_read
-      
-      # results$sp_selected <- sp_selected
       
       plot_ly(data = sp_occ, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
     }
   })
   
   output$map_grid_occ <- renderLeaflet({
-    if (!is.null(input$file2) & !is.null(input$file1)) {
+    if (!is.null(variables$results)) {
       results <- variables$results
       
       sp_occ_total <- results[, results[nrow(results), ] != 0]
@@ -455,6 +449,9 @@ function(input, output, session) {
         sp_occ[sp_occ[ , i] == 1, ]$sp <- results_sp_names[i]
       }
       
+      colors <- colorRampPalette(palette()[2:length(palette())-1])(length(unique(sp_occ$sp)))
+      pal <- colorFactor(colors, domain = unique(sp_occ$sp))
+      
       leaflet() %>%
         addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
         addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
@@ -463,11 +460,12 @@ function(input, output, session) {
                          options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
         setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
         addCircleMarkers(
+          data = sp_occ,
           lng = as.numeric(sp_occ$lon),
           lat = as.numeric(sp_occ$lat),
-          popup = paste(sp_occ$sp, ", lon:", sp_occ$lon, ", lat:", sp_occ$lat),
+          label = paste(sp_occ$sp, ", lon:", sp_occ$lon, ", lat:", sp_occ$lat),
           radius = 7,
-          color = "blue",
+          color = ~pal(sp_occ$sp),
           stroke = FALSE, fillOpacity = 0.3
         )
     }
