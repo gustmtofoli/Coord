@@ -314,7 +314,7 @@ plot_ly(data = df, x = ~lat, y = ~lon, color = ~sp, type = 'scatter')
 
 # ================================================================
 # GRID BOUNDARY TO DETECT PRETTY GOOD OUTLIERS
-grid_brasil <- read.csv('/home/gustavo/Desenvolvimento/Coord/Testing/Ids_coord_bacias_csv.csv')
+grid_brasil <- read.csv('/home/gustavo/Desenvolvimento/Coord/dev-tests/Ids_coord_bacias_csv.csv')
 
 x <- max(grid_brasil$lat) - min(grid_brasil$lat)
 y <- max(grid_brasil$lon) - min(grid_brasil$lon)
@@ -323,13 +323,28 @@ library(raster)
 install.packages('qlcVisualize')
 library(qlcVisualize)
 
-boundary(grid_brasil, density = 0.02, grid = 20, box.offset = 0.1, tightness = 7.5, plot = TRUE)
-b <- boundary(grid_brasil, density = 0.02, grid = 10, box.offset = 0.1, tightness = 7.5, plot = FALSE)
-df_b <- data.frame(b)
+# boundary(grid_brasil, density = 0.02, grid = 20, box.offset = 0.1, tightness = 7.5, plot = TRUE)
+# b <- boundary(grid_brasil, density = 0.02, grid = 10, box.offset = 0.1, tightness = 7.5, plot = FALSE)
+# df_b <- data.frame(b)
 
 library(leaflet)
 
-sp_selected <- sp
+# procedures_sub[order(procedures_sub$CODIGO_PROCEDIMENTO, decreasing = FALSE), ] 
+
+# ordena grid por longitude
+
+# boundary_coord$lon = lon_bound
+# boundary_coord$lat = lat_bound
+
+# insere lista de longitude mais baixa
+# boundary_coord <- append(boundary_coord, list_l[[1]])
+
+#insere lista de longitude mais alta
+# boundary_coord <- append(boundary_coord, list_l[[length(list_l)]])
+
+
+
+
 
 # pal <- colorNumeric(c("red", "green", "blue"), 1:10)
 # pal(c(1,6,9))
@@ -344,25 +359,7 @@ pal <- colorFactor(colors, domain = unique(sp_selected$sp))
 ## Use bin indices, ii, to select color from vector of n-1 equally spaced colors
 
 
-leaflet() %>%
-  addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
-  addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
-  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
-  addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
-                   options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
-  setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
-  addTiles() %>%
-  addCircleMarkers(
-    data = sp_selected,
-    lng = as.numeric(sp_selected$lon),
-    lat = as.numeric(sp_selected$lat),
-    label = paste(sp_selected$sp, ", lon:", sp_selected$lon, ", lat:", sp_selected$lat),
-    radius = 7,
-    color = ~pal(sp_selected$sp),
-    # group = 
-    # fillColor = ~pal,
-    stroke = FALSE, fillOpacity = 0.3
-  )
+
 
 
 # ================================
@@ -392,5 +389,51 @@ p <- sp_a_lot %>%
 p
 
 
+# =============================================================================
+
+# DETECT BOUNDARY COORDINATES
+grid_brasil <- grid_brasil[order(grid_brasil$lon, decreasing = FALSE), ]
+
+lon_bound <- c()
+lat_bound <- c()
+for (i in 1:length(unique(grid_brasil$lon))) {
+  subset_df <- subset(grid_brasil, lon == unique(grid_brasil$lon)[i])
+  subset_df <- subset_df[order(subset_df$lat, decreasing = FALSE), ]
+  lon_bound <- c(lon_bound, subset_df[1, ]$lon)
+  lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
+  lat_bound <- c(lat_bound, subset_df[1, ]$lat)
+  lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
+}
+
+for (i in 1:length(unique(grid_brasil$lat))) {
+  subset_df <- subset(grid_brasil, lat == unique(grid_brasil$lat)[i])
+  subset_df <- subset_df[order(subset_df$lon, decreasing = FALSE), ]
+  lon_bound <- c(lon_bound, subset_df[1, ]$lon)
+  lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
+  lat_bound <- c(lat_bound, subset_df[1, ]$lat)
+  lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
+}
+
+boundary_coord <- data.frame(lon = lon_bound, lat = lat_bound)
+boundary_coord <- unique(boundary_coord)
 
 
+leaflet() %>%
+  addProviderTiles("Esri.OceanBasemap", group = "Esri.OceanBasemap") %>%
+  addProviderTiles("OpenStreetMap.Mapnik", group = "OpenStreetmap") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+  addLayersControl(baseGroups = c("OpenStreetmap","Esri.OceanBasemap", 'Esri.WorldImagery'),
+                   options = layersControlOptions(collapsed = TRUE, autoZIndex = F)) %>%
+  setView(lng = -60.85, lat = -15.45, zoom = 3) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    data = boundary_coord,
+    lng = as.numeric(boundary_coord$lon),
+    lat = as.numeric(boundary_coord$lat),
+    label = paste("lon:", boundary_coord$lon, ", lat:", boundary_coord$lat),
+    radius = 7,
+    color = "blue",
+    # group = 
+    # fillColor = ~pal,
+    stroke = FALSE, fillOpacity = 0.3
+  )
