@@ -5,18 +5,19 @@ library(plotly)
 
 
 header <- dashboardHeader(
-  title = "Moon",
+  title = "Coord",
   titleWidth = 187
 )
 
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Coord", tabName = "coord"),
+    # menuItem("Inputs from DBs", tabName = "input"),
+    menuItem("Input", tabName = "coord"),
     menuItem("Explore Data", tabName = "maps"),
     # menuItem("Charts", tabName = "charts"),
-    menuItem("Summary", tabName = "summary")
-   
+    menuItem("Summary", tabName = "summary"),
+    menuItem("Predict", tabName = "predict")
   )
 )
 
@@ -58,6 +59,7 @@ body <- dashboardBody(
                          Tab='\t'),
                        ','),
           tags$hr()
+          
         ),
         
         box(
@@ -224,6 +226,71 @@ body <- dashboardBody(
       #   )
       # )
       
+    ),
+    
+    tabItem(
+      "predict",
+      fluidRow(
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Upload", 
+          status = "primary",
+          
+          fileInput('predictors_files', 'Predictors',
+                    accept = c(
+                      '.tif'
+                    ),
+                    multiple = TRUE
+          ),
+          
+          fileInput('occ_file', 'Occurrence file',
+                    accept = c(
+                      'text/csv',
+                      'text/comma-separated-values',
+                      'text/tab-separated-values',
+                      'text/plain',
+                      '.csv',
+                      '.tsv'
+                    )
+          ),
+          tags$hr(),
+          checkboxInput('header', 'Header', TRUE),
+          radioButtons('sep', 'Separator',
+                       c(Comma=',',
+                         Semicolon=';',
+                         Tab='\t'),
+                       ','),
+          tags$hr()
+        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "TEST SHOW PREDICTORS",
+          status = "primary",
+          uiOutput("show_predictors"),
+          plotOutput("show_predictors_test")
+        )
+      ),
+      
+      fluidRow(
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "TEST SHOW AUC CURVE",
+          status = "primary",
+          plotOutput("show_auc_curve")
+        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "TEST SHOW PREDICT MAP",
+          status = "primary",
+          plotOutput("show_predict_map")
+        )
+      )
     )
   )
 )
