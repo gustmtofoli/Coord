@@ -234,15 +234,10 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "Upload", 
+          title = "TEST UPLOAD OCC PRESENCE AND ABSENCE FILE", 
           status = "primary",
           
-          fileInput('predictors_files', 'Predictors',
-                    accept = c(
-                      '.tif'
-                    ),
-                    multiple = TRUE
-          ),
+          uiOutput("select_algorithm"),
           
           fileInput('occ_file', 'Occurrence file',
                     accept = c(
@@ -269,16 +264,23 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "TEST SHOW PREDICTORS",
           status = "primary",
+          fileInput('predictors_files', 'Predictors',
+                    accept = c(
+                      '.tif'
+                    ),
+                    multiple = TRUE
+          ),
           uiOutput("show_predictors"),
           plotOutput("show_predictors_test")
         )
+        
       ),
       
       fluidRow(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST SHOW AUC CURVE",
+          title = "TEST SHOW AUC",
           status = "primary",
           plotOutput("show_auc_curve")
         ),
@@ -290,6 +292,7 @@ body <- dashboardBody(
           status = "primary",
           plotOutput("show_predict_map")
         )
+        
       )
     )
   )

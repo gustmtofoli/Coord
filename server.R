@@ -491,137 +491,131 @@ function(input, output, session) {
   })
   
   output$show_predictors <- renderUI({
-    selectInput("select_predictors", label = h5("Predictors"),
+    selectInput("select_predictors", label = "",
                choices = input$predictors_files,
                selected = 1)
   })
   
   library(rgdal)
   output$show_predictors_test <- renderPlot({
-    datafiles <- input$predictors_files
-    
-    stck = stack() 
-    for(i in 1:NROW(datafiles)){
+    if (!is.null(input$predictors_files)) {
+      datafiles <- input$predictors_files
+      stck = stack() 
+      for(i in 1:NROW(datafiles)){
+        print(datafiles)
+        tempraster = raster(datafiles[i, ]$datapath)
+        print(tempraster)
+        stck = stack(stck,tempraster)
+      }
+      print(">>>>>>>")
       print(datafiles)
-      tempraster = raster(datafiles[i, ]$datapath)
-      print(tempraster)
-      stck = stack(stck,tempraster)
+      print(names(stck))
+      names(stck) <- datafiles$name
+      n_array <- c()
+      for (i in 1:length(names(stck))) {
+        n_array <- c(n_array, i)
+      }
+      df_select <- data.frame(n = n_array, predictors = names(stck))
+      x = subset(df_select, predictors %in% input$select_predictors)
+      plot(stck, x$n)
     }
-    print(">>>>>>>")
-    print(datafiles)
-    print(names(stck))
-    names(stck) <- datafiles$name
-    n_array <- c()
-    for (i in 1:length(names(stck))) {
-      n_array <- c(n_array, i)
-    }
-    df_select <- data.frame(n = n_array, predictors = names(stck))
-    x = subset(df_select, predictors %in% input$select_predictors)
-    plot(stck, x$n)
   })
 
   output$show_auc_curve <- renderPlot({
-    datafiles <- input$predictors_files
-    occ_file <- input$occ_file
-    pa <- read.csv(occ_file$datapath, header = input$header,
-                   sep = input$sep, quote = input$quote)
-    # setwd("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/bioclim")
-    # pa=read.csv("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/Pres_abs.csv")
-    # datafiles = Sys.glob("*.tif")
-    set.seed(1) #pseudo-repeatability
-    trainIndex = createDataPartition(pa$pb, p = .75,
-                                     list = FALSE,
-                                     times = 1) #y as basis of splitting
+    if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
+      datafiles <- input$predictors_files
+      occ_file <- input$occ_file
+      pa <- read.csv(occ_file$datapath, header = input$header,
+                     sep = input$sep, quote = input$quote)
+      set.seed(1) #pseudo-repeatability
+      trainIndex = createDataPartition(pa$pb, p = .75,
+                                       list = FALSE,
+                                       times = 1) #y as basis of splitting
 
-    training = pa[ trainIndex,] #75% data for model training
-    testing= pa[-trainIndex,] #25% for model testing
+      training = pa[ trainIndex,] #75% data for model training
+      testing= pa[-trainIndex,] #25% for model testing
 
-    ## caret
-    # define training control--> 10fold cv
-    train_control = trainControl(method="cv", number=10)
+      ## caret
+      # define training control--> 10fold cv
+      train_control = trainControl(method="cv", number=10)
 
-    #svm with rbf kernel
-    mod_fit1=train(pb~.,
-                   data=training,trControl=train_control,method="rf", importance=TRUE)
-    ## test the model
-    p1=predict(mod_fit1, newdata=testing) #predict on the test data
+      #svm with rbf kernel
+      print("-----------------------------")
+      print(input$select_input_algorithm)
+      mod_fit1=train(pb~.,
+                     data=training,trControl=train_control, method=input$select_input_algorithm, importance=TRUE)
+      ## test the model
+      p1=predict(mod_fit1, newdata=testing) #predict on the test data
 
-    roc = pROC::roc(testing[,"pb"], p1) #compare testing data
-    #with predicted responses
+      roc = pROC::roc(testing[,"pb"], p1) #compare testing data
+      #with predicted responses
 
-    auc= pROC::auc(roc)
-    print("\n\n>>> auc:")
-    print(auc)
-    plot(roc)
-    text(0.5,0.5,paste("AUC = ",format(auc, digits=5, scientific=FALSE)))
+      auc= pROC::auc(roc)
+      print("\n\n>>> auc:")
+      print(auc)
+      plot(roc)
+      text(0.5,0.5,paste("AUC = ",format(auc, digits=5, scientific=FALSE)))
+    }
 
 
   })
   
   output$show_predict_map <- renderPlot({
-    # pa <- input$occ_file
-    # setwd("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/bioclim")
-    # pa=read.csv("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/Pres_abs.csv")
-    # datafiles = Sys.glob("*.tif")
-    datafiles <- input$predictors_files
-    
-    occ_file <- input$occ_file
-    pa <- read.csv(occ_file$datapath, header = input$header,
-                                    sep = input$sep, quote = input$quote)
-    set.seed(1) #pseudo-repeatability
-    trainIndex = createDataPartition(pa$pb, p = .75, 
-                                     list = FALSE,
-                                     times = 1) #y as basis of splitting
-    
-    training = pa[ trainIndex,] #75% data for model training
-    testing= pa[-trainIndex,] #25% for model testing
-    
-    pb=as.factor(training$pb)
-    # land=as.factor(training$land)
-    
-    ## caret
-    # define training control--> 10fold cv
-    train_control = trainControl(method="cv", number=10)
-    
-    #rf with rbf kernel
-    mod_fit1=train(pb~.,
-                   data=training,trControl=train_control,method="rf", importance=TRUE)
-    ## test the model
-    p1=predict(mod_fit1, newdata=testing) #predict on the test data
-    
-    # roc = pROC::roc(testing[,"pb"], p1) #compare testing data
-    #with predicted responses
-    
-    # auc= pROC::auc(roc)
-    # print("\n\n>>> auc:")
-    # print(auc)
-    # plot(roc)
-    # text(0.5,0.5,paste("AUC = ",format(auc, digits=5, scientific=FALSE)))
-    
-    # datafiles = Sys.glob("*.tif") #Or whatever identifies your files
-    
-    # datafiles #list of predictors
-    stck = stack() #empty raster stack for storing raster layers
-    for(i in 1:NROW(datafiles)){
-      tempraster = raster(datafiles[i, ]$datapath)
-      print(">>> tempraster")
-      print(tempraster)
-      stck = stack(stck,tempraster)
+    if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
+      datafiles <- input$predictors_files
+      
+      occ_file <- input$occ_file
+      pa <- read.csv(occ_file$datapath, header = input$header,
+                                      sep = input$sep, quote = input$quote)
+      set.seed(1) #pseudo-repeatability
+      trainIndex = createDataPartition(pa$pb, p = .75, 
+                                       list = FALSE,
+                                       times = 1) #y as basis of splitting
+      
+      training = pa[ trainIndex,] #75% data for model training
+      testing= pa[-trainIndex,] #25% for model testing
+      
+      train_control = trainControl(method="cv", number=10)
+      
+      df_algorithms_test <- data.frame(name = c("SVM", "Random Forest", "KNN"), method = c("svmRadial", "rf", "knn"))
+      print("=========================================")
+      print(input$select_input_algorithm)
+      print(subset(df_algorithms_test, method %in% input$select_input_algorithm)$name)
+      title_predictive_map <- paste0("Predictive Map - ", subset(df_algorithms_test, method %in% input$select_input_algorithm)$name)
+      
+      print(training)
+      mod_fit1=train(pb~altitude+aspect1,
+                     data=training,trControl=train_control,method=input$select_input_algorithm, importance=TRUE)
+      ## test the model
+      p1=predict(mod_fit1, newdata=testing) 
+      
+      stck = stack() 
+      for(i in 1:NROW(datafiles)){
+        tempraster = raster(datafiles[i, ]$datapath)
+        # print(">>> tempraster")
+        # print(tempraster)
+        stck = stack(stck,tempraster)
+      }
+      # print(">>> names")
+      # print(names(stck))
+      names(stck) <- c("altitude", "aspect1", "preciptn", "roughness1", "slope", "tempAvg", "tempMin")
+      # print(names(stck))
+      
+      print(">>> antes do predict")
+      p1 = predict(stck, mod_fit1) #use predict to implement the RF model stored
+      print(">>> depois do predict")
+      
+      plot(p1, main = title_predictive_map)
+      
     }
-    print(">>> names")
-    print(names(stck))
-    names(stck) <- c("altitude", "aspect1")
-    print(names(stck))
     
-    # print(">>> stck")
-    # print(stck)
-    print(">>> antes do predict")
-    p1 = predict(stck, mod_fit1) #use predict to implement the RF model stored
-    print(">>> depois do predict")
-    # print(p1)
-    #in mod_fit on the raster stack of our predictors
-    plot(p1,main="RF Predictive Map")
-    
+  })
+  
+  output$select_algorithm <- renderUI({
+    algorithms <- c("Random Forest" = "rf", "KNN" = "knn", "SVM" = "svmRadial")
+    selectInput("select_input_algorithm", label = "Choose Algorithm",
+                choices = algorithms,
+                selected = 1)
   })
   
   
