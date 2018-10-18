@@ -31,3 +31,6 @@ install.packages('geojsonio')
 install.packages('openssl')
 install.packages('httr')
 install.packages('plotly')
+
+install.packages('shinycssloaders')
+install.packages('highcharter')

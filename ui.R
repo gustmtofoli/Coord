@@ -2,6 +2,8 @@ library(shinydashboard)
 library(leaflet)
 library(DT)
 library(plotly)
+library(shinycssloaders)
+library(highcharter)
 
 
 header <- dashboardHeader(
@@ -13,7 +15,7 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Input", tabName = "coord"),
+    menuItem("Presence/Absence", tabName = "coord"),
     menuItem("Explore Data", tabName = "maps"),
     # menuItem("Charts", tabName = "charts"),
     menuItem("Summary", tabName = "summary"),
@@ -41,7 +43,7 @@ body <- dashboardBody(
                       '.tsv'
                     )
           ),
-          fileInput('file2', 'Choose sp file to upload',
+          fileInput('file2', "Choose species presence file to upload",
                     accept = c(
                       'text/csv',
                       'text/comma-separated-values',
@@ -73,7 +75,7 @@ body <- dashboardBody(
         box(
           width = 4,
           collapsible = TRUE,
-          title = "Sp File", 
+          title = "Species presence File", 
           status = "info",
           dataTableOutput("sp")
         )
@@ -100,13 +102,11 @@ body <- dashboardBody(
       )
     ),
       
-    
-    
-    
     tabItem(
       "summary",
       fluidRow(
         box(
+          width = 4,
           collapsible = TRUE,
           title = "Species Frequency",
           status = "success",
@@ -114,13 +114,17 @@ body <- dashboardBody(
           downloadButton("download_species_freq", "Download")
         ),
         box(
+          width = 8,
           collapsible = TRUE,
           title = "Species Outliers",
           status = "success",
           DT::dataTableOutput("species_outliers"),
           downloadButton("download_species_outliers", "Download")
-        ),
+        )
+      ),
+      fluidRow(
         box(
+          width = 4,
           collapsible = TRUE,
           title = "Species Outliers Frequency",
           status = "success",
@@ -128,12 +132,14 @@ body <- dashboardBody(
           downloadButton("download_species_outliers_freq", "Download")
         ),
         box(
+          width = 4,
           collapsible = TRUE,
           title = "Duplicated records in species",
           status = "success",
           DT::dataTableOutput("duplicated_sp")
         ),
         box(
+          width = 4,
           collapsible = TRUE,
           title = "Duplicated coordinates in grid",
           status = "success",
@@ -162,7 +168,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Sp Coordinates", 
           status = "warning",
-          plotlyOutput("scatter_plot")
+          plotlyOutput("scatter_plot") %>% withSpinner(color="#0dc5c1")
         ),
         
         box(
@@ -170,16 +176,16 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Sp Frequency", 
           status = "warning",
-          plotlyOutput("sp_freq_plot")
-        ), 
-        
-        box(
-          width = 12,
-          collapsible = TRUE,
-          title = "Sp Outliers", 
-          status = "warning",
-          plotlyOutput("sp_out_freq_plot")
+          plotlyOutput("sp_freq_plot") %>% withSpinner(color="#0dc5c1")
         )
+        
+        # box(
+        #   width = 12,
+        #   collapsible = TRUE,
+        #   title = "Sp Outliers", 
+        #   status = "warning",
+        #   plotlyOutput("sp_out_freq_plot") %>% withSpinner(color="#0dc5c1")
+        # )
       ),
       
       fluidRow(
@@ -188,7 +194,7 @@ body <- dashboardBody(
           title = "Species location", 
           status = "success",
           width = 6,
-          leafletOutput("map_sp", height="650")
+          leafletOutput("map_sp", height="650") %>% withSpinner(color="#0dc5c1")
         ),
         
         box(
@@ -196,7 +202,7 @@ body <- dashboardBody(
           title = "Species location - clustered", 
           status = "info",
           width =6,
-          leafletOutput("map_sp_clustered", height="650")
+          leafletOutput("map_sp_clustered", height="650") %>% withSpinner(color="#0dc5c1")
         ),
         
         box(
@@ -204,7 +210,7 @@ body <- dashboardBody(
           title = "Centroids location", 
           status = "info",
           width = 6,
-          leafletOutput("map_grid", height="650")
+          leafletOutput("map_grid", height="650") %>% withSpinner(color="#0dc5c1")
         ),
         
         box(
@@ -212,7 +218,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Occurences", 
           status = "warning",
-          leafletOutput("map_grid_occ", height="650")
+          leafletOutput("map_grid_occ", height="650") %>% withSpinner(color="#0dc5c1")
         )
        
       )
@@ -231,6 +237,21 @@ body <- dashboardBody(
     tabItem(
       "predict",
       fluidRow(
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "TEST SHOW PREDICTORS",
+          status = "primary",
+          fileInput('predictors_files', 'Predictors',
+                    accept = c(
+                      '.tif'
+                    ),
+                    multiple = TRUE
+          ),
+          uiOutput("show_predictors"),
+          plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
+        ),
+        
         box(
           width = 6,
           collapsible = TRUE,
@@ -257,21 +278,6 @@ body <- dashboardBody(
                          Tab='\t'),
                        ','),
           tags$hr()
-        ),
-        
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "TEST SHOW PREDICTORS",
-          status = "primary",
-          fileInput('predictors_files', 'Predictors',
-                    accept = c(
-                      '.tif'
-                    ),
-                    multiple = TRUE
-          ),
-          uiOutput("show_predictors"),
-          plotOutput("show_predictors_test")
         )
         
       ),
@@ -282,7 +288,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "TEST SHOW AUC",
           status = "primary",
-          plotOutput("show_auc_curve")
+          plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
         ),
         
         box(
@@ -290,7 +296,8 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "TEST SHOW PREDICT MAP",
           status = "primary",
-          plotOutput("show_predict_map")
+          plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
+          
         )
         
       )
