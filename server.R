@@ -30,20 +30,13 @@ function(input, output, session) {
                                       auc = NULL,
                                       predictive_map = NULL)
   
-  predict_variables$algorithms <- data.frame(name = c("SVM", "Random Forest", "KNN"), method = c("svmRadial", "rf", "knn"))
-  
-  
-  # observeEvent(input$predictors_files, {
-  #   if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
-  #     runAlgorithm(input$predictors_files, input$occ_file)
-  #   }
-  # })
-  
-  # observeEvent(input$occ_file, {
-  #   if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
-  #     runAlgorithm(input$predictors_files, input$occ_file)
-  #   }
-  # })
+  predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
+                                                      "Random Forest", 
+                                                      "KNN - k-nearest neighbors"), 
+                                             method = c("svmRadial", 
+                                                        "rf", 
+                                                        "knn") 
+                                             )
   
   observeEvent(input$file1, {
     if (!is.null(input$file1)) {
@@ -165,64 +158,41 @@ function(input, output, session) {
   }
   
   runAlgorithm = function(predictors, pres_abs) {
-    # print(">>> start runAlgorithm")
     datafiles <- predictors
     
     occ_file <- pres_abs
     
     pa <- read.csv(occ_file$datapath, header = input$header,
                    sep = input$sep, quote = input$quote)
-    set.seed(1) #pseudo-repeatability
+    n <- runif(1, min=1, max=999999);
+    set.seed(n) #pseudo-repeatability
     trainIndex = createDataPartition(pa$pb, p = .75, 
                                      list = FALSE,
                                      times = 1) 
     
-    # print(">>> trainIndex OK")
-    
     training = pa[ trainIndex,] #75% data for model training
     predict_variables$training <- training
-    # print(">>> training OK")
     testing= pa[-trainIndex,] #25% for model testing
     predict_variables$testing <- testing
-    # print(">>> testing OK")
-    
     train_control = trainControl(method="cv", number=10)
-    print(">>> trainControl OK")
-    
-    # algorithms <- predict_variables$algorithms
-    
-   
-    
-    # print(training)
+    algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
     mod_fit1=train(pb~.,
-                   data=training, trControl=train_control, method=input$select_input_algorithm, importance=TRUE)
-    # print(">>> mod_fit1 OK")
-    # predict_variables$model_train <- mod_fit1
-    # print(">>> model_train OK")
-    ## test the model
+                   data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
     p1=predict(mod_fit1, newdata=testing) 
-    
     roc = pROC::roc(testing[,"pb"], p1) #compare testing data
     predict_variables$roc <- roc
-    # print(">>> roc OK")
     auc= pROC::auc(roc)
     predict_variables$auc <- auc
-    # print(">>> auc OK")
-    
     stck = stack() 
+    names_stack <- c()
     for(i in 1:NROW(datafiles)){
+      names_stack <- c(names_stack, substring(datafiles[i, ]$name, 1, nchar(datafiles[i, ]$name) - 4))
       tempraster = raster(datafiles[i, ]$datapath)
       stck = stack(stck,tempraster)
     }
-    names(stck) <- c("altitude", "aspect1", "preciptn", "roughness1", "slope", "tempAvg", "tempMin")
-    # predict_variables$stack <- stck
-    # print(">>> stack OK")
+    names(stck) <- names_stack
     p1 = predict(stck, mod_fit1)
-    # print(p1)
     predict_variables$predictive_map <- p1
-    # print(">>> predictive map")
-    # print(predict_variables$predictive_map)
-    # print(">>> predictive map OK")
   }
   
   
@@ -625,15 +595,10 @@ function(input, output, session) {
   })
   
   output$select_algorithm <- renderUI({
-    algorithms <- c("Random Forest" = "rf", "KNN" = "knn", "SVM" = "svmRadial")
     selectInput("select_input_algorithm", label = "Choose Algorithm",
-                choices = algorithms,
+                choices = predict_variables$algorithms,
                 selected = 1)
   })
-  
-  
-  
-  
   
 }
 
