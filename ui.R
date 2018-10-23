@@ -105,6 +105,12 @@ body <- dashboardBody(
     tabItem(
       "summary",
       fluidRow(
+        infoBoxOutput("sp_duplicated_percent"),
+        infoBoxOutput("grid_duplicated_percent"),
+        infoBoxOutput("sp_outliers_percent")
+      ),
+      
+      fluidRow(
         box(
           width = 4,
           collapsible = TRUE,
@@ -222,15 +228,6 @@ body <- dashboardBody(
         )
        
       )
-      # fluidRow(
-      #   box(
-      #     width = 6,
-      #     collapsible = TRUE,
-      #     title = "Centroids with occurence", 
-      #     status = "warning",
-      #     leafletOutput("map_grid", height="650")
-      #   )
-      # )
       
     ),
     
@@ -258,8 +255,6 @@ body <- dashboardBody(
           title = "TEST UPLOAD OCC PRESENCE AND ABSENCE FILE", 
           status = "primary",
           
-          uiOutput("select_algorithm"),
-          
           fileInput('occ_file', 'Occurrence file',
                     accept = c(
                       'text/csv',
@@ -277,7 +272,10 @@ body <- dashboardBody(
                          Semicolon=';',
                          Tab='\t'),
                        ','),
-          tags$hr()
+          tags$hr(),
+          uiOutput("select_algorithm"),
+          textInput("training_set", "Training Set (%): "),
+          textInput("test_set", "Test Set (%): ")
         )
         
       ),
@@ -297,7 +295,14 @@ body <- dashboardBody(
           title = "TEST SHOW PREDICT MAP",
           status = "primary",
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
-          
+        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "TEST INFOS",
+          status = "primary",
+          textOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
         )
         
       )

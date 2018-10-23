@@ -19,7 +19,8 @@ function(input, output, session) {
                               results = NULL)
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
-                                        duplicated_grid = NULL)
+                                        duplicated_grid = NULL,
+                                        original_sp_nrow = NULL)
   
   filter_variables <- reactiveValues(sp_filter = NULL)
   
@@ -53,6 +54,7 @@ function(input, output, session) {
       sp <- input$file2
       variables$sp_read <- read.csv(sp$datapath, header = input$header,
                                     sep = input$sep, quote = input$quote)
+      secondary_variables$original_sp_nrow <- nrow(variables$sp_read)
       secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
       variables$sp_read <- unique(variables$sp_read)
     }
@@ -158,6 +160,13 @@ function(input, output, session) {
   }
   
   runAlgorithm = function(predictors, pres_abs) {
+    showModal(modalDialog(
+      title = "Hey",
+      footer = NULL,
+      easyClose = TRUE,
+      "This may take some time... coffee?"
+    ))
+    
     datafiles <- predictors
     
     occ_file <- pres_abs
@@ -551,18 +560,12 @@ function(input, output, session) {
   library(rgdal)
   output$show_predictors_test <- renderPlot({
     if (!is.null(input$predictors_files)) {
-      
       datafiles <- input$predictors_files
       stck = stack() 
       for(i in 1:NROW(datafiles)){
-        print(datafiles)
         tempraster = raster(datafiles[i, ]$datapath)
-        print(tempraster)
         stck = stack(stck,tempraster)
       }
-      print(">>>>>>>")
-      print(datafiles)
-      print(names(stck))
       names(stck) <- datafiles$name
       n_array <- c()
       for (i in 1:length(names(stck))) {
@@ -575,15 +578,10 @@ function(input, output, session) {
   })
 
   output$show_auc_curve <- renderPlot({
-
     if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
       plot(predict_variables$roc)
-      # print(">>> teste")
       text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
-      # print(">>> fim show auc")
     }
-
-
   })
   
   output$show_predict_map <- renderPlot({
@@ -598,6 +596,39 @@ function(input, output, session) {
     selectInput("select_input_algorithm", label = "Choose Algorithm",
                 choices = predict_variables$algorithms,
                 selected = 1)
+  })
+  
+  output$info_training_testing <- renderText({
+    if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
+      print("INFOS HERE")
+    }
+  })
+  
+  output$sp_duplicated_percent <- renderInfoBox({
+    duplicated_percent <- (nrow(secondary_variables$duplicated_sp) / secondary_variables$original_sp_nrow)*100
+    infoBox(
+      "Sp - Duplicated", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
+  })
+  
+  output$grid_duplicated_percent <- renderInfoBox({
+    duplicated_percent <- (nrow(secondary_variables$duplicated_grid) / nrow(variables$grid_read))*100
+    infoBox(
+      "Grid - Duplicated", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_outliers_percent <- renderInfoBox({
+    duplicated_percent <- ((secondary_variables$original_sp_nrow - nrow(variables$sp_without_outliers)) / secondary_variables$original_sp_nrow)*100
+    infoBox(
+      "Sp - Outliers", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
   })
   
 }
