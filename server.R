@@ -32,10 +32,14 @@ function(input, output, session) {
                                       predictive_map = NULL)
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
-                                                      "Random Forest", 
+                                                      "Random Forest",
+                                                      "GLM - Logistic Regression",
+                                                      "GBM - Gradient Boosting Machine",
                                                       "KNN - k-nearest neighbors"), 
                                              method = c("svmRadial", 
-                                                        "rf", 
+                                                        "rf",
+                                                        "glm",
+                                                        "gbm",
                                                         "knn") 
                                              )
   
@@ -185,8 +189,20 @@ function(input, output, session) {
     predict_variables$testing <- testing
     train_control = trainControl(method="cv", number=10)
     algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-    mod_fit1=train(pb~.,
-                   data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
+    
+    if (algorithm_selected == "glm") {
+      mod_fit1 = train(pb~.,
+                       data=training, trControl=train_control, method=algorithm_selected, family="binomial")
+    }
+    
+    if (algorithm_selected == "gbm") {
+      mod_fit1 = train(pb~.,
+                       data=training, trControl=train_control, method=algorithm_selected)
+    }
+    else {
+      mod_fit1 = train(pb~.,
+                     data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
+    }
     p1=predict(mod_fit1, newdata=testing) 
     roc = pROC::roc(testing[,"pb"], p1) #compare testing data
     predict_variables$roc <- roc
@@ -202,6 +218,19 @@ function(input, output, session) {
     names(stck) <- names_stack
     p1 = predict(stck, mod_fit1)
     predict_variables$predictive_map <- p1
+    
+    showModal(modalDialog(
+      title = "Nice work!",
+      footer = NULL,
+      easyClose = TRUE,
+      "Some stats about your execution:", br(),
+      "Execution time: ", br(),
+      "Started: ", br(),
+      "Finished: ", br(),
+      "Algorithm: ", br(),
+      "Training set (randomly selected): ", br(),
+      "Test set: ", br()
+    ))
   }
   
   
@@ -215,8 +244,6 @@ function(input, output, session) {
   
   output$sp <- DT::renderDataTable({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      # remove_species_outliers(variables$grid_read, variables$sp_read)
-      # variables$sp_without_outliers
       variables$sp_read
     }
   })
@@ -224,11 +251,7 @@ function(input, output, session) {
   output$result <- DT::renderDataTable({
     if (!is.null(input$file1) & !is.null(input$file2)) {
       if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
-        # generate_result(variables$grid_read, variables$sp_read)
         results <- variables$results
-        # print(results[nrow(results), 2:(ncol(results))-1])
-        # results[ ,  >= min(input$range)]
-        # results[ , results[nrow(results), 2:(ncol(results))] <= max(input$range)]
       }
       else {
         showModal(modalDialog(
@@ -237,9 +260,9 @@ function(input, output, session) {
           footer = NULL,
           "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
           br(),
-          "But you still can analyze your data normally."
+          "But you still can explore your data."
         ))
-        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can analyze your data normally."))
+        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
       }
     }
   })
@@ -376,7 +399,6 @@ function(input, output, session) {
   
   output$map_sp <- renderLeaflet({
     if (!is.null(input$file2) & !is.null(input$file1)) {
-      # sp_read <- variables$sp_read
       grid_read <- variables$grid_read
       sp_read <- variables$sp_without_outliers
       
@@ -587,7 +609,10 @@ function(input, output, session) {
   output$show_predict_map <- renderPlot({
       if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
         runAlgorithm(input$predictors_files, input$occ_file)
-        title_predictive_map <- paste0("Predictive Map - ", subset(predict_variables$algorithms, method %in% input$select_input_algorithm)$name)
+        print(">>>>> PREDICT MAP")
+        print(predict_variables$algorithms)
+        print(input$select_input_algorithm)
+        title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
         plot(predict_variables$predictive_map, main = title_predictive_map)
       }
   })
@@ -623,9 +648,24 @@ function(input, output, session) {
   })
   
   output$sp_outliers_percent <- renderInfoBox({
-    duplicated_percent <- ((secondary_variables$original_sp_nrow - nrow(variables$sp_without_outliers)) / secondary_variables$original_sp_nrow)*100
+    outliers <- get_species_outliers()
+    outliers_percent <- (nrow(outliers) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Outliers", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      "Sp - Outliers", 
+      paste0(round(outliers_percent, 2), "%"), 
+      icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_total_percent <- renderInfoBox({
+    total_percent <- (nrow(variables$sp_read) / secondary_variables$original_sp_nrow)*100
+    infoBox(
+      "Sp - Total", 
+      paste0("Used: ", round(total_percent, 2), "%"),
+      paste0("Removed: ", 100 - round(total_percent, 2), "%"),
+      icon = icon("list"),
       color = "green", 
       fill = TRUE
     )

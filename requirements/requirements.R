@@ -34,3 +34,5 @@ install.packages('plotly')
 
 install.packages('shinycssloaders')
 install.packages('highcharter')
+
+install.packages('gbm')

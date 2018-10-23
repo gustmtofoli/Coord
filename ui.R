@@ -105,9 +105,10 @@ body <- dashboardBody(
     tabItem(
       "summary",
       fluidRow(
+        infoBoxOutput("sp_total_percent"),
         infoBoxOutput("sp_duplicated_percent"),
-        infoBoxOutput("grid_duplicated_percent"),
-        infoBoxOutput("sp_outliers_percent")
+        infoBoxOutput("sp_outliers_percent"),
+        infoBoxOutput("grid_duplicated_percent")
       ),
       
       fluidRow(
