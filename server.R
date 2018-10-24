@@ -20,7 +20,7 @@ function(input, output, session) {
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
-                                        original_sp_nrow = NULL)
+                                        original_sp_nrow = 0)
   
   filter_variables <- reactiveValues(sp_filter = NULL)
   
@@ -77,9 +77,41 @@ function(input, output, session) {
   })
   
   remove_species_outliers = function(grid_read, sp_read) {
-    subset(sp_read, sp_read$lon >= min(grid_read$lon) 
+    # lon_bound <- c()
+    # lat_bound <- c()
+    # for (i in 1:length(unique(grid_read$lon))) {
+    #   subset_df <- subset(grid_read, lon == unique(grid_read$lon)[i])
+    #   subset_df <- subset_df[order(subset_df$lat, decreasing = FALSE), ]
+    #   lon_bound <- c(lon_bound, subset_df[1, ]$lon)
+    #   lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
+    #   lat_bound <- c(lat_bound, subset_df[1, ]$lat)
+    #   lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
+    # }
+    # 
+    # for (i in 1:length(unique(grid_read$lat))) {
+    #   subset_df <- subset(grid_read, lat == unique(grid_read$lat)[i])
+    #   subset_df <- subset_df[order(subset_df$lon, decreasing = FALSE), ]
+    #   lon_bound <- c(lon_bound, subset_df[1, ]$lon)
+    #   lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
+    #   lat_bound <- c(lat_bound, subset_df[1, ]$lat)
+    #   lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
+    # }
+    # 
+    # boundary_coord <- data.frame(lon = lon_bound, lat = lat_bound)
+    # boundary_coord <- unique(boundary_coord)
+    
+    # print(boundary_coord)
+    
+    
+    # subset(sp_read, 
+    #                 sp_read$lon <= boundary_coord$lon
+    #               & sp_read$lon > boundary_coord$lon
+    #               & sp_read$lat <= boundary_coord$lat
+    #               & sp_read$lat > boundary_coord$lat
+    #        )
+    subset(sp_read, sp_read$lon >= min(grid_read$lon)
                              & sp_read$lon <= max(grid_read$lon)
-                             & sp_read$lat >= min(grid_read$lat) 
+                             & sp_read$lat >= min(grid_read$lat)
                              & sp_read$lat <= max(grid_read$lat))
   }
   
@@ -632,7 +664,10 @@ function(input, output, session) {
   output$sp_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_sp) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Duplicated", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      "Sp - Duplicated", 
+      paste0(round(duplicated_percent, 2), "%"),
+      paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow),
+      icon = icon("list"),
       color = "green", 
       fill = TRUE
     )
@@ -641,7 +676,10 @@ function(input, output, session) {
   output$grid_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_grid) / nrow(variables$grid_read))*100
     infoBox(
-      "Grid - Duplicated", paste0(round(duplicated_percent, 2), "%"), icon = icon("list"),
+      "Grid - Duplicated", 
+      paste0(round(duplicated_percent, 2), "%"),
+      paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read)),
+      icon = icon("list"),
       color = "green", 
       fill = TRUE
     )
@@ -652,7 +690,8 @@ function(input, output, session) {
     outliers_percent <- (nrow(outliers) / secondary_variables$original_sp_nrow)*100
     infoBox(
       "Sp - Outliers", 
-      paste0(round(outliers_percent, 2), "%"), 
+      paste0(round(outliers_percent, 2), "%"),
+      paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow),
       icon = icon("list"),
       color = "green", 
       fill = TRUE
@@ -663,8 +702,8 @@ function(input, output, session) {
     total_percent <- (nrow(variables$sp_read) / secondary_variables$original_sp_nrow)*100
     infoBox(
       "Sp - Total", 
-      paste0("Used: ", round(total_percent, 2), "%"),
-      paste0("Removed: ", 100 - round(total_percent, 2), "%"),
+      paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), ")"),
+      paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), ")"),
       icon = icon("list"),
       color = "green", 
       fill = TRUE

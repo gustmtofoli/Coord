@@ -36,3 +36,5 @@ install.packages('shinycssloaders')
 install.packages('highcharter')
 
 install.packages('gbm')
+install.packages('rJava')
+Sys.setenv(JAVA_HOME='/usr/lib/jvm/java-8-oracle/jre')
