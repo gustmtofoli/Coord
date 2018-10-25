@@ -720,5 +720,16 @@ function(input, output, session) {
     )
   })
   
+  output$number_of_species <- renderInfoBox({
+    number_of_species <- length(unique(variables$sp_read$sp))
+    infoBox(
+      "Number of species", 
+      paste0(number_of_species),
+      icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
+  })
+  
 }
 

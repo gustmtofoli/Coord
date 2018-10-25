@@ -93,7 +93,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Results", 
+          title = "Presence and absence", 
           status = "warning",
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
@@ -108,7 +108,8 @@ body <- dashboardBody(
         infoBoxOutput("sp_total_percent"),
         infoBoxOutput("sp_duplicated_percent"),
         infoBoxOutput("sp_outliers_percent"),
-        infoBoxOutput("grid_duplicated_percent")
+        infoBoxOutput("grid_duplicated_percent"),
+        infoBoxOutput("number_of_species")
       ),
       
       fluidRow(
