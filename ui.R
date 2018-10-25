@@ -303,7 +303,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "TEST INFOS",
           status = "primary",
-          textOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
+          DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
         )
         
       )

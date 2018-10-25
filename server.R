@@ -29,7 +29,8 @@ function(input, output, session) {
                                       testing = NULL,
                                       roc = NULL,
                                       auc = NULL,
-                                      predictive_map = NULL)
+                                      predictive_map = NULL,
+                                      execution_time = 0)
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
@@ -196,6 +197,7 @@ function(input, output, session) {
   }
   
   runAlgorithm = function(predictors, pres_abs) {
+    start_time <- Sys.time()
     showModal(modalDialog(
       title = "Hey",
       footer = NULL,
@@ -250,18 +252,13 @@ function(input, output, session) {
     names(stck) <- names_stack
     p1 = predict(stck, mod_fit1)
     predict_variables$predictive_map <- p1
+    end_time <- Sys.time()
+    predict_variables$execution_time = round((end_time - start_time), 2)
     
     showModal(modalDialog(
       title = "Nice work!",
       footer = NULL,
-      easyClose = TRUE,
-      "Some stats about your execution:", br(),
-      "Execution time: ", br(),
-      "Started: ", br(),
-      "Finished: ", br(),
-      "Algorithm: ", br(),
-      "Training set (randomly selected): ", br(),
-      "Test set: ", br()
+      easyClose = TRUE
     ))
   }
   
@@ -655,9 +652,22 @@ function(input, output, session) {
                 selected = 1)
   })
   
-  output$info_training_testing <- renderText({
+  output$info_training_testing <- DT::renderDataTable({
     if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
-      print("INFOS HERE")
+      df_info <- data.frame(info = c('Execution time: ', 
+                                     'Algorithm: ', 
+                                     'Training set: ', 
+                                     'Test set: ',
+                                     'Number of predictors: ',
+                                     'AUC: '), 
+                            value = c(as.character(predict_variables$execution_time), 
+                                      input$select_input_algorithm, 
+                                      '75%', 
+                                      '25%',
+                                      'number of predictors here',
+                                      'auc here'))
+      print(df_info)
+      df_info
     }
   })
   
