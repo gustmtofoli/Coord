@@ -268,7 +268,6 @@ body <- dashboardBody(
           tags$hr(),
           uiOutput("select_algorithm"),
           textInput("training_set", "Training Set (%): "),
-          # textInput("test_set", "Test Set (%): ")
           actionButton("run_algorithm_btn", "Run", width = "100%")
         )
         

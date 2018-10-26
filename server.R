@@ -61,6 +61,10 @@ function(input, output, session) {
     predict_variables$can_run_algorithm <- FALSE
   })
   
+  observeEvent(input$training_set, {
+    predict_variables$can_run_algorithm <- FALSE
+  })
+  
   observeEvent(input$file1, {
     if (!is.null(input$file1)) {
       grid <- input$file1
@@ -233,7 +237,11 @@ function(input, output, session) {
                      sep = input$sep, quote = input$quote)
       n <- runif(1, min=1, max=999999);
       set.seed(n) #pseudo-repeatability
-      trainIndex = createDataPartition(pa$pb, p = .75, 
+      # trainIndex = createDataPartition(pa$pb, p = .75, 
+      #                                  list = FALSE,
+      #                                  times = 1) 
+      
+      trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
                                        list = FALSE,
                                        times = 1) 
       
@@ -669,8 +677,8 @@ function(input, output, session) {
                                      'AUC: '), 
                             value = c(as.character(predict_variables$execution_time), 
                                       input$select_input_algorithm, 
-                                      '75%', 
-                                      '25%',
+                                      paste0(input$training_set, "%"), 
+                                      paste0(100 - as.numeric(input$training_set), "%"),
                                       as.character(round(predict_variables$auc, 5))))
       df_info
     }
