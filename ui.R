@@ -17,7 +17,6 @@ sidebar <- dashboardSidebar(
     # menuItem("Inputs from DBs", tabName = "input"),
     menuItem("Presence/Absence", tabName = "coord"),
     menuItem("Explore Data", tabName = "maps"),
-    # menuItem("Charts", tabName = "charts"),
     menuItem("Summary", tabName = "summary"),
     menuItem("Predict", tabName = "predict")
   )
@@ -186,14 +185,6 @@ body <- dashboardBody(
           status = "warning",
           plotlyOutput("sp_freq_plot") %>% withSpinner(color="#0dc5c1")
         )
-        
-        # box(
-        #   width = 12,
-        #   collapsible = TRUE,
-        #   title = "Sp Outliers", 
-        #   status = "warning",
-        #   plotlyOutput("sp_out_freq_plot") %>% withSpinner(color="#0dc5c1")
-        # )
       ),
       
       fluidRow(
@@ -239,7 +230,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST SHOW PREDICTORS",
+          title = "Upload Predictors",
           status = "primary",
           fileInput('predictors_files', 'Predictors',
                     accept = c(
@@ -254,7 +245,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST UPLOAD OCC PRESENCE AND ABSENCE FILE", 
+          title = "Upload Presence/Absence File and Select Algorithm", 
           status = "primary",
           
           fileInput('occ_file', 'Occurrence file',
@@ -277,7 +268,8 @@ body <- dashboardBody(
           tags$hr(),
           uiOutput("select_algorithm"),
           textInput("training_set", "Training Set (%): "),
-          textInput("test_set", "Test Set (%): ")
+          # textInput("test_set", "Test Set (%): ")
+          actionButton("run_algorithm_btn", "Run", width = "100%")
         )
         
       ),
@@ -286,7 +278,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST SHOW AUC",
+          title = "AUC",
           status = "primary",
           plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
         ),
@@ -294,7 +286,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST SHOW PREDICT MAP",
+          title = "Predictive Map",
           status = "primary",
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         ),
@@ -302,7 +294,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "TEST INFOS",
+          title = "Execution Info",
           status = "primary",
           DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
         )

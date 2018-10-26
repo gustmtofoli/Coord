@@ -30,7 +30,8 @@ function(input, output, session) {
                                       roc = NULL,
                                       auc = NULL,
                                       predictive_map = NULL,
-                                      execution_time = 0)
+                                      execution_time = 0,
+                                      can_run_algorithm = FALSE)
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
@@ -43,6 +44,22 @@ function(input, output, session) {
                                                         "gbm",
                                                         "knn") 
                                              )
+  
+  observeEvent(input$run_algorithm_btn, {
+    predict_variables$can_run_algorithm <- TRUE
+  })
+  
+  observeEvent(input$select_input_algorithm, {
+    predict_variables$can_run_algorithm <- FALSE
+  })
+  
+  observeEvent(input$predictors_files, {
+    predict_variables$can_run_algorithm <- FALSE
+  })
+  
+  observeEvent(input$occ_file, {
+    predict_variables$can_run_algorithm <- FALSE
+  })
   
   observeEvent(input$file1, {
     if (!is.null(input$file1)) {
@@ -197,69 +214,73 @@ function(input, output, session) {
   }
   
   runAlgorithm = function(predictors, pres_abs) {
-    start_time <- Sys.time()
-    showModal(modalDialog(
-      title = "Hey",
-      footer = NULL,
-      easyClose = TRUE,
-      "This may take some time... coffee?"
-    ))
+    if (predict_variables$can_run_algorithm) {
+      
     
-    datafiles <- predictors
-    
-    occ_file <- pres_abs
-    
-    pa <- read.csv(occ_file$datapath, header = input$header,
-                   sep = input$sep, quote = input$quote)
-    n <- runif(1, min=1, max=999999);
-    set.seed(n) #pseudo-repeatability
-    trainIndex = createDataPartition(pa$pb, p = .75, 
-                                     list = FALSE,
-                                     times = 1) 
-    
-    training = pa[ trainIndex,] #75% data for model training
-    predict_variables$training <- training
-    testing= pa[-trainIndex,] #25% for model testing
-    predict_variables$testing <- testing
-    train_control = trainControl(method="cv", number=10)
-    algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-    
-    if (algorithm_selected == "glm") {
-      mod_fit1 = train(pb~.,
-                       data=training, trControl=train_control, method=algorithm_selected, family="binomial")
+      start_time <- Sys.time()
+      showModal(modalDialog(
+        title = "Hey",
+        footer = NULL,
+        easyClose = TRUE,
+        "This may take some time... coffee?"
+      ))
+      
+      datafiles <- predictors
+      
+      occ_file <- pres_abs
+      
+      pa <- read.csv(occ_file$datapath, header = input$header,
+                     sep = input$sep, quote = input$quote)
+      n <- runif(1, min=1, max=999999);
+      set.seed(n) #pseudo-repeatability
+      trainIndex = createDataPartition(pa$pb, p = .75, 
+                                       list = FALSE,
+                                       times = 1) 
+      
+      training = pa[ trainIndex,] #75% data for model training
+      predict_variables$training <- training
+      testing= pa[-trainIndex,] #25% for model testing
+      predict_variables$testing <- testing
+      train_control = trainControl(method="cv", number=10)
+      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
+      
+      if (algorithm_selected == "glm") {
+        mod_fit1 = train(pb~.,
+                         data=training, trControl=train_control, method=algorithm_selected, family="binomial")
+      }
+      
+      if (algorithm_selected == "gbm") {
+        mod_fit1 = train(pb~.,
+                         data=training, trControl=train_control, method=algorithm_selected)
+      }
+      else {
+        mod_fit1 = train(pb~.,
+                       data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
+      }
+      p1=predict(mod_fit1, newdata=testing) 
+      roc = pROC::roc(testing[,"pb"], p1) #compare testing data
+      predict_variables$roc <- roc
+      auc= pROC::auc(roc)
+      predict_variables$auc <- auc
+      stck = stack() 
+      names_stack <- c()
+      for(i in 1:NROW(datafiles)){
+        names_stack <- c(names_stack, substring(datafiles[i, ]$name, 1, nchar(datafiles[i, ]$name) - 4))
+        tempraster = raster(datafiles[i, ]$datapath)
+        stck = stack(stck,tempraster)
+      }
+      names(stck) <- names_stack
+      p1 = predict(stck, mod_fit1)
+      predict_variables$predictive_map <- p1
+      end_time <- Sys.time()
+      predict_variables$execution_time = round((end_time - start_time), 2)
+      
+      showModal(modalDialog(
+        title = "Nice work!",
+        footer = NULL,
+        easyClose = TRUE
+      ))
     }
-    
-    if (algorithm_selected == "gbm") {
-      mod_fit1 = train(pb~.,
-                       data=training, trControl=train_control, method=algorithm_selected)
-    }
-    else {
-      mod_fit1 = train(pb~.,
-                     data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
-    }
-    p1=predict(mod_fit1, newdata=testing) 
-    roc = pROC::roc(testing[,"pb"], p1) #compare testing data
-    predict_variables$roc <- roc
-    auc= pROC::auc(roc)
-    predict_variables$auc <- auc
-    stck = stack() 
-    names_stack <- c()
-    for(i in 1:NROW(datafiles)){
-      names_stack <- c(names_stack, substring(datafiles[i, ]$name, 1, nchar(datafiles[i, ]$name) - 4))
-      tempraster = raster(datafiles[i, ]$datapath)
-      stck = stack(stck,tempraster)
-    }
-    names(stck) <- names_stack
-    p1 = predict(stck, mod_fit1)
-    predict_variables$predictive_map <- p1
-    end_time <- Sys.time()
-    predict_variables$execution_time = round((end_time - start_time), 2)
-    
-    showModal(modalDialog(
-      title = "Nice work!",
-      footer = NULL,
-      easyClose = TRUE
-    ))
   }
   
   
@@ -295,16 +316,6 @@ function(input, output, session) {
       }
     }
   })
-  
-  # output$filter_sp_occ <- renderUI({
-  #   results <- variables$results
-  #   if (!is.null(results)) {
-  #     total_occ_per_sp <- results[nrow(results), 2:ncol(results)-1]
-  #     sliderInput("range", "Occurrence range:",
-  #                 min = min(total_occ_per_sp), max = max(total_occ_per_sp),
-  #                 value = c(min(total_occ_per_sp), max(total_occ_per_sp)))
-  #   }
-  # })
   
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
@@ -636,14 +647,11 @@ function(input, output, session) {
   })
   
   output$show_predict_map <- renderPlot({
-      if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
-        runAlgorithm(input$predictors_files, input$occ_file)
-        print(">>>>> PREDICT MAP")
-        print(predict_variables$algorithms)
-        print(input$select_input_algorithm)
-        title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
-        plot(predict_variables$predictive_map, main = title_predictive_map)
-      }
+    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
+      runAlgorithm(input$predictors_files, input$occ_file)
+      title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
+      plot(predict_variables$predictive_map, main = title_predictive_map)
+    }
   })
   
   output$select_algorithm <- renderUI({
@@ -653,20 +661,17 @@ function(input, output, session) {
   })
   
   output$info_training_testing <- DT::renderDataTable({
-    if (!is.null(input$predictors_files) & !is.null(input$occ_file)) {
+    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
       df_info <- data.frame(info = c('Execution time: ', 
                                      'Algorithm: ', 
                                      'Training set: ', 
                                      'Test set: ',
-                                     'Number of predictors: ',
                                      'AUC: '), 
                             value = c(as.character(predict_variables$execution_time), 
                                       input$select_input_algorithm, 
                                       '75%', 
                                       '25%',
-                                      'number of predictors here',
-                                      'auc here'))
-      print(df_info)
+                                      as.character(round(predict_variables$auc, 5))))
       df_info
     }
   })
