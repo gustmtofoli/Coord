@@ -396,7 +396,6 @@ function(input, output, session) {
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_freq <- get_species_freq()
       sp_selected <- subset(sp_freq, Specie %in% input$selec_filter_sp_map)
-      # grid_read <- variables$grid_read
       a <- list(
         autotick = FALSE,
         showticklabels = FALSE
