@@ -81,14 +81,6 @@ body <- dashboardBody(
       ),
       
       fluidRow(
-        # box(
-        #   width = 4,
-        #   collapsible = TRUE,
-        #   title = "Filter",
-        #   status = "warning",
-        #   uiOutput("filter_sp_occ")
-        # ),
-        
         box(
           width = 12,
           collapsible = TRUE,
