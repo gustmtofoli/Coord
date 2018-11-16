@@ -26,8 +26,11 @@ model_list <- caretList(
   methodList=c("glm", "rpart")
 )
 
-p <- as.data.frame(predict(model_list, newdata=head(testing)))
+model <- predict(model_list, newdata=head(testing))
+p <- as.data.frame(model)
 print(p)
+
+plot(model)
 
 library("mlbench")
 library("randomForest")
@@ -57,6 +60,8 @@ greedy_ensemble <- caretEnsemble(
   ))
 summary(greedy_ensemble)
 
+plot(greedy_ensemble)
+
 library("caTools")
 model_preds <- lapply(model_list, predict, newdata=testing, type="prob")
 model_preds <- lapply(model_preds, function(x) x[,"M"])
@@ -66,3 +71,7 @@ model_preds$ensemble <- ens_preds
 caTools::colAUC(model_preds, testing$Class)
 
 varImp(greedy_ensemble)
+
+
+plot(ens_preds)
+
