@@ -5,7 +5,7 @@ library(caret)
 library(sdm)
 library(raster)
 library(dismo)
-
+library(biomod2)
 # # le arquivo
 # horn=read.csv("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/hornbill_my1.csv")
 # 
@@ -51,13 +51,48 @@ set.seed(1)
 backgr = randomPoints(stck, 500) #500 random points
 absvals = extract(stck, backgr) #choose absence values from the background
 absvals_df <- data.frame()
-absvals_df$long <- backgr[, 'x']
-absvals_df$lat <- backgr[, 'y']
+# absvals_df$long <- backgr[, 'x']
+# absvals_df$lat <- backgr[, 'y']
 pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
 sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
 head(sdmdata)
 sdmdata=na.omit(sdmdata)
 summary(sdmdata)
+# =================================================================================
+
+
+#  biomod data ====================================================================
+spName <- "Buceros rhinoceros"
+myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata$pb,
+                                     expl.var = stck,
+                                     resp.xy = sdmdata[, c('long', 'lat')],
+                                     resp.name = spName)
+myBiomodData
+plot(myBiomodData)
+# =================================================================================
+
+
+# options =========================================================================
+myBiomodOption <- BIOMOD_ModelingOptions()
+# =================================================================================
+
+
+# models ==========================================================================
+myBiomodModelOut <- BIOMOD_Modeling(
+  myBiomodData,
+  models = c('SRE','CTA','RF','MARS','FDA'),
+  models.options = myBiomodOption,
+  NbRunEval=3,
+  DataSplit=80,
+  Prevalence=0.5,
+  VarImport=3, #length(stck@layers),
+  models.eval.meth = c('TSS','ROC'),
+  SaveObj = TRUE,
+  rescal.all.models = TRUE,
+  do.full.models = FALSE,
+  modeling.id = paste(myRespName,"FirstModeling",sep=""))
+
+myBiomodModelOut
 # =================================================================================
 
 # separando conjuntos de treino e teste ===========================================
@@ -124,6 +159,10 @@ plot(e2)
 
 e3 <- ensemble(m, newdata = stck, filename = 'e3.img', setting = list(method = 'unweighted'))
 plot(e3)
+# ==================================================================================
 
+
+# gui ==============================================================================
 installAll()
 gui(m)
+# ==================================================================================

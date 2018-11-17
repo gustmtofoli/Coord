@@ -141,5 +141,7 @@ myBiomodEF <- BIOMOD_EnsembleForecasting(
   projection.output = myBiomodProj)
 
 myBiomodEF
-# reduce layer names for plotting convegences
-plot(myBiomodEF)
+
+# get evaluation scores
+
+

@@ -3,9 +3,9 @@
 library(SSDM)
 data(Env)
 data(Occurrences)
-Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+Occurrences_elliptica <- subset(Occurrences, SPECIES == 'elliptica')
 
-SDM <- modelling('GLM', Occurrences, 
+SDM <- modelling('GLM', Occurrences_elliptica, 
                  Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE', verbose = FALSE)
 plot(SDM@projection, main = 'SDM\nfor Cryptocarya elliptica\nwith GLM algorithm')
 
@@ -23,7 +23,7 @@ plot(ESDM@projection, main = 'ESDM\nfor Cryptocarya elliptica\nwith CTA and MARS
 
 
 # =========================================================================
-# DEPRECATED ==============================
+# ==============================
 SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
                         Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
                         Spcol = 'SPECIES', method = "pSSDM", verbose = FALSE)
@@ -33,3 +33,9 @@ plot(SSDM@diversity.map, main = 'SSDM\nfor Cryptocarya genus\nwith CTA and SVM a
 
 knitr::kable(ESDM@evaluation)
 knitr::kable(ESDM@variable.importance)
+
+plot(SSDM)
+
+install.packages('shinyFiles')
+library(shinyFiles)
+gui()

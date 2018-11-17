@@ -8,7 +8,7 @@ library("pROC")
 data(Sonar)
 set.seed(107)
 inTrain <- createDataPartition(y = Sonar$Class, p = .75, list = FALSE)
-training <- Sonar[ inTrain,]
+training_2 <- Sonar[ inTrain,]
 testing <- Sonar[-inTrain,]
 
 my_control <- trainControl(
@@ -21,7 +21,7 @@ my_control <- trainControl(
 )
 
 model_list <- caretList(
-  Class~., data=training,
+  Class~., data=training_2,
   trControl=my_control,
   methodList=c("glm", "rpart")
 )
