@@ -5,19 +5,30 @@ file <- system.file("external/species.shp", package="sdm") # get the location of
 
 species <- shapefile(file) # read the shapefile
 
+# teste =======================================
+
+
+# =============================================
+
 path <- system.file("external", package="sdm") # path to the folder contains the data
 
 lst <- list.files(path=path,pattern='asc$',full.names = T) # list the name of the raster files 
 
+# teste =======================================
+
+
+
+# =============================================
 
 # stack is a function in the raster package, to read/create a multi-layers raster dataset
 preds <- stack(lst) # making a raster object
 
+
 d <- sdmData(formula=Occurrence~., train=species, predictors=preds)
 
-d
 
-# fit the models (5 methods, and 10 replications using bootstrapping procedure):
+
+# fit the models (5 methods, and 10 replications using bootstrappicedure):
 m <- sdm(Occurrence~.,data=d,methods=c('rf', 'fda','mars','svm'),
          replicatin='boot',n=10)
 
