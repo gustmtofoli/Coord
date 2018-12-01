@@ -10,6 +10,7 @@ library(caret)
 library(pROC)
 library(shinycssloaders)
 library(highcharter)
+library(spocc)
 
 function(input, output, session) {
 
@@ -31,7 +32,8 @@ function(input, output, session) {
                                       auc = NULL,
                                       predictive_map = NULL,
                                       execution_time = 0,
-                                      can_run_algorithm = FALSE)
+                                      can_run_algorithm = FALSE,
+                                      data_from_DB = NULL)
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
@@ -47,6 +49,12 @@ function(input, output, session) {
   
   observeEvent(input$run_algorithm_btn, {
     predict_variables$can_run_algorithm <- TRUE
+  })
+  
+  observeEvent(input$download_from_DB, {
+      data_from_DB <- occ(input$sp_name, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
+      predict_variables$data_from_DB <- occ2df(data_from_DB)
+      print(predict_variables$data_from_DB)
   })
   
   observeEvent(input$select_input_algorithm, {
@@ -664,7 +672,7 @@ function(input, output, session) {
   output$select_algorithm <- renderUI({
     selectInput("select_input_algorithm", label = "Choose Algorithm",
                 choices = predict_variables$algorithms,
-                selected = 1)
+                selected = 1, multiple = TRUE)
   })
   
   output$info_training_testing <- DT::renderDataTable({
@@ -742,6 +750,14 @@ function(input, output, session) {
       fill = TRUE
     )
   })
+  
+  output$select_DB <- renderUI({
+    selectInput("selec_DB", label = "Select Data base: ",
+                choices = c('GBIF', 'SpeciesLink'),
+                selected = 1, multiple = TRUE)
+  })
+  
+  
   
 }
 
