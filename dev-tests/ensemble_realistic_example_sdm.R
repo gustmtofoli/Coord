@@ -50,7 +50,7 @@ prs1_df$lat <- data$latitude
 set.seed(1)
 backgr = randomPoints(stck, 500) #500 random points
 absvals = extract(stck, backgr) #choose absence values from the background
-absvals_df <- data.frame()
+absvals_df <- data.frame(absvals)
 absvals_df$long <- backgr[, 'x']
 absvals_df$lat <- backgr[, 'y']
 pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
@@ -68,10 +68,10 @@ summary(sdmdata)
 
 
 # convertendo o data frame training em um shapefile da classe SpatialPoints =======
-WGScoor <- training
-coordinates(WGScoor)=~long+lat
-proj4string(WGScoor)<- CRS("+proj=longlat +datum=WGS84")
-training_data <-spTransform(WGScoor,CRS("+proj=longlat"))
+# WGScoor <- sdmdata
+# coordinates(WGScoor)=~long+lat
+# proj4string(WGScoor)<- CRS("+proj=longlat +datum=WGS84")
+# training_data <-spTransform(WGScoor,CRS("+proj=longlat"))
 # =================================================================================
 
 
@@ -113,7 +113,7 @@ plot(p1m)
 
 # ensemble ========================================================================
 e1 <- ensemble(m, newdata = stck, filename = 'e1.img', 
-               setting = list(method = 'weighted', stat = 'AUC')) 
+               setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE) 
 
 plot(e1)
 
