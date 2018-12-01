@@ -237,7 +237,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "Upload Presence/Absence File and Select Algorithm", 
+          title = "Presence/Absence File", 
           status = "primary",
           
           fileInput('occ_file', 'Occurrence file',
@@ -256,14 +256,34 @@ body <- dashboardBody(
                        c(Comma=',',
                          Semicolon=';',
                          Tab='\t'),
-                       ','),
-          tags$hr(),
+                       ',')
+        ),
+        
+          box(
+            width = 6,
+            collapsible = TRUE,
+            title = "[TEST] Download from Data Bases", 
+            status = "primary",
+            textInput("sp_name", "Species name: "),
+            uiOutput("select_DB"),
+            actionButton("download_from_DB", "Download")
+          )
+        
+      ),
+      
+      fluidRow(
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Algorithm", 
+          status = "primary",
           uiOutput("select_algorithm"),
           textInput("training_set", "Training Set (%): "),
           actionButton("run_algorithm_btn", "Run", width = "100%")
         )
-        
       ),
+      
+     
       
       fluidRow(
         box(
