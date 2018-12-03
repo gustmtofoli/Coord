@@ -37,9 +37,11 @@ function(input, output, session) {
                                       roc = NULL,
                                       auc = NULL,
                                       predictive_map = NULL,
+                                      predictive_model = NULL,
                                       execution_time = 0,
                                       can_run_algorithm = FALSE,
                                       data_from_DB = NULL,
+                                      ensemble_map = NULL,
                                       data_bases = c("gbif", 
                                                      "ecoengine",
                                                      "bison",
@@ -287,12 +289,12 @@ function(input, output, session) {
         stck = stack(stck,tempraster)
       }
       names(stck) <- names_stack
-      print(stck)
+      # print(stck)
       
       data <- pres_abs
       
       data <- data[, 2:3]
-      print(data)
+      # print(data)
       
       
      
@@ -300,7 +302,7 @@ function(input, output, session) {
       prs1_df <- data.frame(prs1)
       prs1_df$long <- data$long
       prs1_df$lat <- data$lat
-      print(prs1)
+      # print(prs1)
       
       n <- runif(1, min=1, max=999999);
       set.seed(n)
@@ -310,7 +312,7 @@ function(input, output, session) {
       absvals_df$long <- backgr[, 'x']
       absvals_df$lat <- backgr[, 'y']
       pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
-      print(pb)
+      # print(pb)
       sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
       # head(sdmdata)
       sdmdata=na.omit(sdmdata)
@@ -333,7 +335,14 @@ function(input, output, session) {
       
       m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
                test.percent = (100 - as.numeric(input$training_set)), n = 2)
-      print(m)
+      
+      predict_variables$predictive_model <- m
+      
+      print(">>> model:")
+      print(predict_variables$predictive_model)
+      print(">>> model info:")
+      model_info <- getModelInfo(m)
+      print(model_info)
       
       
       
@@ -374,10 +383,13 @@ function(input, output, session) {
       # roc = pROC::roc(testing[,"pb"], p1)
       # predict_variables$roc <- roc
       # auc= pROC::auc(roc)
-      # predict_variables$auc <- auc
+      # predict_variables$auc <- roc(m)
       
       
-      
+      e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
+                     setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
+
+      predict_variables$ensemble_map <- e1
       
       
       
@@ -750,39 +762,46 @@ function(input, output, session) {
   })
 
   output$show_auc_curve <- renderPlot({
-    if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
-      plot(predict_variables$roc)
-      text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+    # if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
+    #   plot(predict_variables$roc)
+    #   text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+    # }
+    if (!is.null(predict_variables$roc)) {
+      predict_variables$roc
+      # text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
     }
   })
   
-  # output$show_predict_map <- renderPlot({
-  #   if (!is.null(input$predictors_files) & predict_variables$can_run_algorithm) {
-  #     runAlgorithm(input$predictors_files, input$sp_read)
-  #     title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
-  #     plot(predict_variables$predictive_map, main = title_predictive_map)
-  #   }
-  # })
+  output$show_predict_map <- renderPlot({
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
+      runAlgorithm(input$predictors_files, variables$sp_read)
+      title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
+      if (!is.null(predict_variables$ensemble_map)) {
+        plot(predict_variables$ensemble_map, main = title_predictive_map)
+      }
+    }
+  })
   
   output$select_algorithm <- renderUI({
-    selectInput("select_input_algorithm", label = "Choose Algorithm",
+    selectInput("select_input_algorithm", label = "Choose Algorithms: ",
                 choices = predict_variables$algorithms,
                 selected = 1, multiple = TRUE)
   })
   
   output$info_training_testing <- DT::renderDataTable({
-    if (!is.null(input$predictors_files) & predict_variables$can_run_algorithm) {
-      runAlgorithm(input$predictors_files, variables$sp_read)
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
       df_info <- data.frame(info = c('Execution time: ', 
-                                     'Algorithm: ', 
+                                     # 'Algorithm: ', 
                                      'Training set: ', 
-                                     'Test set: ',
-                                     'AUC: '), 
+                                     'Test set: '
+                                     # 'AUC: '
+                                     ), 
                             value = c(as.character(predict_variables$execution_time), 
-                                      input$select_input_algorithm, 
+                                      # input$select_input_algorithm, 
                                       paste0(input$training_set, "%"), 
-                                      paste0(100 - as.numeric(input$training_set), "%"),
-                                      as.character(round(predict_variables$auc, 5))))
+                                      paste0(100 - as.numeric(input$training_set), "%")
+                                      # as.character(round(predict_variables$auc, 5))
+                                      ))
       df_info
     }
   })

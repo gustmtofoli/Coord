@@ -111,7 +111,7 @@ body <- dashboardBody(
           status = "primary",
           textInput("sp_name", "Species name: "),
           uiOutput("select_DB"),
-          actionButton("download_from_DB", "Download")
+          actionButton("download_from_DB", "Search")
         ),
       
         box(
@@ -265,30 +265,30 @@ body <- dashboardBody(
           plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
         ),
         
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "Presence/Absence File", 
-          status = "primary",
-          
-          fileInput('occ_file', 'Occurrence file',
-                    accept = c(
-                      'text/csv',
-                      'text/comma-separated-values',
-                      'text/tab-separated-values',
-                      'text/plain',
-                      '.csv',
-                      '.tsv'
-                    )
-          ),
-          tags$hr(),
-          checkboxInput('header', 'Header', TRUE),
-          radioButtons('sep', 'Separator',
-                       c(Comma=',',
-                         Semicolon=';',
-                         Tab='\t'),
-                       ',')
-        ),
+        # box(
+        #   width = 6,
+        #   collapsible = TRUE,
+        #   title = "Presence/Absence File", 
+        #   status = "primary",
+        #   
+        #   fileInput('occ_file', 'Occurrence file',
+        #             accept = c(
+        #               'text/csv',
+        #               'text/comma-separated-values',
+        #               'text/tab-separated-values',
+        #               'text/plain',
+        #               '.csv',
+        #               '.tsv'
+        #             )
+        #   ),
+        #   tags$hr(),
+        #   checkboxInput('header', 'Header', TRUE),
+        #   radioButtons('sep', 'Separator',
+        #                c(Comma=',',
+        #                  Semicolon=';',
+        #                  Tab='\t'),
+        #                ',')
+        # ),
         
         box(
           width = 6,
@@ -307,7 +307,7 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "AUC",
+          title = "Evaluations",
           status = "primary",
           plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
         ),

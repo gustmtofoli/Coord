@@ -29,7 +29,7 @@ for(i in 1:NROW(datafiles)){
 # download das ocorrencias da espécie utilizando o GBIF ===========================
 library(spocc)
 spp = c("Buceros rhinoceros")
-buceros_rhinoceros = occ(spp, from = c('bison'))
+buceros_rhinoceros = occ(spp, from = c('gbif'))
 df <-occ2df(buceros_rhinoceros)
 df[df$prov == 'bison', ]
 nrow(df)
