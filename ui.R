@@ -259,16 +259,26 @@ body <- dashboardBody(
                        ',')
         ),
         
-          box(
-            width = 6,
-            collapsible = TRUE,
-            title = "[TEST] Download from Data Bases", 
-            status = "primary",
-            textInput("sp_name", "Species name: "),
-            uiOutput("select_DB"),
-            actionButton("download_from_DB", "Download")
-          )
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "[TEST] Download from Data Bases", 
+          status = "primary",
+          textInput("sp_name", "Species name: "),
+          uiOutput("select_DB"),
+          actionButton("download_from_DB", "Download")
+        )
         
+      ),
+      
+      fluidRow(
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Downloaded Data", 
+          status = "primary",
+          DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
+        )
       ),
       
       fluidRow(

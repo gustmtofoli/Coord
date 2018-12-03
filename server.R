@@ -33,7 +33,9 @@ function(input, output, session) {
                                       predictive_map = NULL,
                                       execution_time = 0,
                                       can_run_algorithm = FALSE,
-                                      data_from_DB = NULL)
+                                      data_from_DB = NULL,
+                                      data_bases = c("gbif", 
+                                                     "ecoengine"))
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
@@ -44,7 +46,7 @@ function(input, output, session) {
                                                         "rf",
                                                         "glm",
                                                         "gbm",
-                                                        "knn") 
+                                                        "knn")
                                              )
   
   observeEvent(input$run_algorithm_btn, {
@@ -52,9 +54,36 @@ function(input, output, session) {
   })
   
   observeEvent(input$download_from_DB, {
-      data_from_DB <- occ(input$sp_name, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
-      predict_variables$data_from_DB <- occ2df(data_from_DB)
-      print(predict_variables$data_from_DB)
+    showModal(modalDialog(
+      title = "Hmmm...",
+      footer = NULL,
+      easyClose = TRUE,
+      "Searching Data..."
+    ))
+    data_from_DB <- occ(input$sp_name, from = c(input$selec_DB))
+    showModal(modalDialog(
+      title = "Good news!",
+      footer = NULL,
+      easyClose = TRUE,
+      "Downloading Data..."
+    ))
+    df_data <- occ2df(data_from_DB)
+    if (!is.null(df_data) & nrow(df_data) > 0) {
+      predict_variables$data_from_DB <- df_data[, 1:3]
+      showModal(modalDialog(
+        title = "Nice work!!",
+        footer = NULL,
+        easyClose = TRUE
+      ))
+    }
+    else {
+      showModal(modalDialog(
+        title = "Oh no :(",
+        footer = NULL,
+        easyClose = TRUE,
+        paste0("No records found in ", input$select_DB, " for ", input$sp_name)
+      ))
+    }
   })
   
   observeEvent(input$select_input_algorithm, {
@@ -753,8 +782,12 @@ function(input, output, session) {
   
   output$select_DB <- renderUI({
     selectInput("selec_DB", label = "Select Data base: ",
-                choices = c('GBIF', 'SpeciesLink'),
-                selected = 1, multiple = TRUE)
+                choices = predict_variables$data_bases,
+                selected = 1, multiple = FALSE)
+  })
+  
+  output$show_downloaded_data <- DT::renderDataTable({
+    predict_variables$data_from_DB
   })
   
   

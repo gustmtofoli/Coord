@@ -29,7 +29,9 @@ for(i in 1:NROW(datafiles)){
 # download das ocorrencias da espécie utilizando o GBIF ===========================
 library(spocc)
 spp = c("Buceros rhinoceros")
-buceros_rhinoceros = occ(spp, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
+buceros_rhinoceros = occ(spp, from = c('ecoengine'))
+df <-occ2df(buceros_rhinoceros)
+nrow(df)
 head(buceros_rhinoceros)
 data = occ2df(buceros_rhinoceros)
 # apenas lat e long
