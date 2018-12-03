@@ -56,7 +56,7 @@ function(input, output, session) {
                                                       "GLM - Logistic Regression",
                                                       "GBM - Gradient Boosting Machine",
                                                       "KNN - k-nearest neighbors"), 
-                                             method = c("svmRadial", 
+                                             method = c("svm", 
                                                         "rf",
                                                         "glm",
                                                         "gbm",
@@ -304,7 +304,7 @@ function(input, output, session) {
       
       n <- runif(1, min=1, max=999999);
       set.seed(n)
-      backgr = randomPoints(stck, 500) 
+      backgr = randomPoints(stck, nrow(data)) 
       absvals = extract(stck, backgr) 
       absvals_df <- data.frame(absvals)
       absvals_df$long <- backgr[, 'x']
@@ -325,9 +325,15 @@ function(input, output, session) {
       
       
       algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-      m <- sdm(pb~.,data=d,methods=c('rf', 'svm'), replicatin='sub', 
-               test.percent = 25, n = 2)
-      m
+      
+      algorithm <- c()
+      for (algo in algorithm_selected) {
+        algorithm <- c(algorithm, algo)
+      }
+      
+      m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
+               test.percent = (100 - as.numeric(input$training_set)), n = 2)
+      print(m)
       
       
       
