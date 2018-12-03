@@ -35,7 +35,15 @@ function(input, output, session) {
                                       can_run_algorithm = FALSE,
                                       data_from_DB = NULL,
                                       data_bases = c("gbif", 
-                                                     "ecoengine"))
+                                                     "ecoengine",
+                                                     "bison",
+                                                     "inat",
+                                                     "ebird",
+                                                     "antweb",
+                                                     "vertnet",
+                                                     "idigbio",
+                                                     "obis",
+                                                     "ala"))
   
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
@@ -57,19 +65,15 @@ function(input, output, session) {
     showModal(modalDialog(
       title = "Hmmm...",
       footer = NULL,
-      easyClose = TRUE,
+      easyClose = FALSE,
       "Searching Data..."
     ))
-    data_from_DB <- occ(input$sp_name, from = c(input$selec_DB))
-    showModal(modalDialog(
-      title = "Good news!",
-      footer = NULL,
-      easyClose = TRUE,
-      "Downloading Data..."
-    ))
+    print("select_DB: ")
+    print(input$select_data_bases)
+    data_from_DB <- occ(input$sp_name, from = input$select_data_bases)
     df_data <- occ2df(data_from_DB)
     if (!is.null(df_data) & nrow(df_data) > 0) {
-      predict_variables$data_from_DB <- df_data[, 1:3]
+      predict_variables$data_from_DB <- df_data[, 1:4]
       showModal(modalDialog(
         title = "Nice work!!",
         footer = NULL,
@@ -81,7 +85,7 @@ function(input, output, session) {
         title = "Oh no :(",
         footer = NULL,
         easyClose = TRUE,
-        paste0("No records found in ", input$select_DB, " for ", input$sp_name)
+        paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
       ))
     }
   })
@@ -781,9 +785,9 @@ function(input, output, session) {
   })
   
   output$select_DB <- renderUI({
-    selectInput("selec_DB", label = "Select Data base: ",
+    selectInput("select_data_bases", label = "Select Data base: ",
                 choices = predict_variables$data_bases,
-                selected = 1, multiple = FALSE)
+                selected = 1, multiple = TRUE)
   })
   
   output$show_downloaded_data <- DT::renderDataTable({

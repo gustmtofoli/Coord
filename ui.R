@@ -15,7 +15,15 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Presence/Absence", tabName = "coord"),
+    menuItem("Presence/Absence",
+             menuSubItem(
+               "Upload Data",
+               tabName = "coord"
+             ),
+             menuSubItem(
+               "From Data Bases",
+               tabName = "from_data_bases"
+             )),
     menuItem("Explore Data", tabName = "maps"),
     menuItem("Summary", tabName = "summary"),
     menuItem("Predict", tabName = "predict")
@@ -90,6 +98,29 @@ body <- dashboardBody(
           downloadButton("download_results", "Download")
         )
         
+      )
+    ),
+    
+    tabItem(
+      "from_data_bases",
+      fluidRow(
+        box(
+          width = 4,
+          collapsible = TRUE,
+          title = "Download from Data Bases", 
+          status = "primary",
+          textInput("sp_name", "Species name: "),
+          uiOutput("select_DB"),
+          actionButton("download_from_DB", "Download")
+        ),
+      
+        box(
+          width = 8,
+          collapsible = TRUE,
+          title = "Downloaded Data", 
+          status = "primary",
+          DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
+        )
       )
     ),
       
@@ -262,38 +293,15 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "[TEST] Download from Data Bases", 
-          status = "primary",
-          textInput("sp_name", "Species name: "),
-          uiOutput("select_DB"),
-          actionButton("download_from_DB", "Download")
-        )
-        
-      ),
-      
-      fluidRow(
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "Downloaded Data", 
-          status = "primary",
-          DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
-        )
-      ),
-      
-      fluidRow(
-        box(
-          width = 6,
-          collapsible = TRUE,
           title = "Algorithm", 
           status = "primary",
           uiOutput("select_algorithm"),
           textInput("training_set", "Training Set (%): "),
           actionButton("run_algorithm_btn", "Run", width = "100%")
         )
+        
       ),
       
-     
       
       fluidRow(
         box(

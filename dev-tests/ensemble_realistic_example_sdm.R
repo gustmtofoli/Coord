@@ -29,8 +29,9 @@ for(i in 1:NROW(datafiles)){
 # download das ocorrencias da espécie utilizando o GBIF ===========================
 library(spocc)
 spp = c("Buceros rhinoceros")
-buceros_rhinoceros = occ(spp, from = c('ecoengine'))
+buceros_rhinoceros = occ(spp, from = c('bison'))
 df <-occ2df(buceros_rhinoceros)
+df[df$prov == 'bison', ]
 nrow(df)
 head(buceros_rhinoceros)
 data = occ2df(buceros_rhinoceros)
