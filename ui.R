@@ -15,7 +15,7 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Presence/Absence",
+    menuItem("Extract Data",
              menuSubItem(
                "Upload Data",
                tabName = "coord"
@@ -24,7 +24,7 @@ sidebar <- dashboardSidebar(
                "From Data Bases",
                tabName = "from_data_bases"
              )),
-    menuItem("Explore Data", tabName = "maps"),
+    menuItem("Exploratory Data Analysis", tabName = "maps"),
     menuItem("Summary", tabName = "summary"),
     menuItem("Predict", tabName = "predict")
   )
@@ -107,7 +107,7 @@ body <- dashboardBody(
         box(
           width = 4,
           collapsible = TRUE,
-          title = "Download from Data Bases", 
+          title = "Download Species Data", 
           status = "primary",
           textInput("sp_name", "Species name: "),
           uiOutput("select_DB"),
@@ -117,7 +117,7 @@ body <- dashboardBody(
         box(
           width = 8,
           collapsible = TRUE,
-          title = "Downloaded Data", 
+          title = "Species", 
           status = "primary",
           DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
         )
@@ -332,6 +332,7 @@ body <- dashboardBody(
     )
   )
 )
+
 
 
 

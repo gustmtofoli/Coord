@@ -11,6 +11,12 @@ library(pROC)
 library(shinycssloaders)
 library(highcharter)
 library(spocc)
+library(maptools)
+library(rgdal)
+library(sp)
+library(caret)
+library(sdm)
+library(dismo)
 
 function(input, output, session) {
 
@@ -68,12 +74,11 @@ function(input, output, session) {
       easyClose = FALSE,
       "Searching Data..."
     ))
-    print("select_DB: ")
-    print(input$select_data_bases)
     data_from_DB <- occ(input$sp_name, from = input$select_data_bases)
     df_data <- occ2df(data_from_DB)
+    colnames(df_data) <- c("sp", "long", "lat")
     if (!is.null(df_data) & nrow(df_data) > 0) {
-      predict_variables$data_from_DB <- df_data[, 1:4]
+      variables$sp_read <- df_data[, 1:3]
       showModal(modalDialog(
         title = "Nice work!!",
         footer = NULL,
@@ -270,47 +275,10 @@ function(input, output, session) {
         "This may take some time... coffee?"
       ))
       
+      
+      
       datafiles <- predictors
       
-      occ_file <- pres_abs
-      
-      pa <- read.csv(occ_file$datapath, header = input$header,
-                     sep = input$sep, quote = input$quote)
-      n <- runif(1, min=1, max=999999);
-      set.seed(n) #pseudo-repeatability
-      # trainIndex = createDataPartition(pa$pb, p = .75, 
-      #                                  list = FALSE,
-      #                                  times = 1) 
-      
-      trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
-                                       list = FALSE,
-                                       times = 1) 
-      
-      training = pa[ trainIndex,] #75% data for model training
-      predict_variables$training <- training
-      testing= pa[-trainIndex,] #25% for model testing
-      predict_variables$testing <- testing
-      train_control = trainControl(method="cv", number=10)
-      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-      
-      if (algorithm_selected == "glm") {
-        mod_fit1 = train(pb~.,
-                         data=training, trControl=train_control, method=algorithm_selected, family="binomial")
-      }
-      
-      if (algorithm_selected == "gbm") {
-        mod_fit1 = train(pb~.,
-                         data=training, trControl=train_control, method=algorithm_selected)
-      }
-      else {
-        mod_fit1 = train(pb~.,
-                       data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
-      }
-      p1=predict(mod_fit1, newdata=testing) 
-      roc = pROC::roc(testing[,"pb"], p1) #compare testing data
-      predict_variables$roc <- roc
-      auc= pROC::auc(roc)
-      predict_variables$auc <- auc
       stck = stack() 
       names_stack <- c()
       for(i in 1:NROW(datafiles)){
@@ -319,8 +287,96 @@ function(input, output, session) {
         stck = stack(stck,tempraster)
       }
       names(stck) <- names_stack
-      p1 = predict(stck, mod_fit1)
-      predict_variables$predictive_map <- p1
+      print(stck)
+      
+      data <- pres_abs
+      
+      data <- data[, 2:3]
+      print(data)
+      
+      
+     
+      prs1 = extract(stck, data)
+      prs1_df <- data.frame(prs1)
+      prs1_df$long <- data$long
+      prs1_df$lat <- data$lat
+      print(prs1)
+      
+      n <- runif(1, min=1, max=999999);
+      set.seed(n)
+      backgr = randomPoints(stck, 500) 
+      absvals = extract(stck, backgr) 
+      absvals_df <- data.frame(absvals)
+      absvals_df$long <- backgr[, 'x']
+      absvals_df$lat <- backgr[, 'y']
+      pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
+      print(pb)
+      sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
+      # head(sdmdata)
+      sdmdata=na.omit(sdmdata)
+      # summary(sdmdata)
+      
+      WGScoor2 <- sdmdata
+      coordinates(WGScoor2)=~long+lat
+      proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
+      sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+      
+      d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
+      
+      
+      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
+      m <- sdm(pb~.,data=d,methods=c('rf', 'svm'), replicatin='sub', 
+               test.percent = 25, n = 2)
+      m
+      
+      
+      
+      # pa <- read.csv(occ_file$datapath, header = input$header,
+      #                sep = input$sep, quote = input$quote)
+      # n <- runif(1, min=1, max=999999);
+      # set.seed(n)
+      # 
+      # trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
+      #                                  list = FALSE,
+      #                                  times = 1) 
+      # 
+      # training = pa[ trainIndex,]
+      # predict_variables$training <- training
+      # testing= pa[-trainIndex,]
+      # predict_variables$testing <- testing
+      # train_control = trainControl(method="cv", number=10)
+      # algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
+      # 
+      # if (algorithm_selected == "glm") {
+      #   mod_fit1 = train(pb~.,
+      #                    data=training, trControl=train_control, method=algorithm_selected, family="binomial")
+      # }
+      # 
+      # if (algorithm_selected == "gbm") {
+      #   mod_fit1 = train(pb~.,
+      #                    data=training, trControl=train_control, method=algorithm_selected)
+      # }
+      # else {
+      #   mod_fit1 = train(pb~.,
+      #                  data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
+      # }
+      
+      
+      
+      
+      # p1=predict(mod_fit1, newdata=testing) 
+      # roc = pROC::roc(testing[,"pb"], p1)
+      # predict_variables$roc <- roc
+      # auc= pROC::auc(roc)
+      # predict_variables$auc <- auc
+      
+      
+      
+      
+      
+      
+      # p1 = predict(stck, mod_fit1)
+      # predict_variables$predictive_map <- p1
       end_time <- Sys.time()
       predict_variables$execution_time = round((end_time - start_time), 2)
       
@@ -347,24 +403,24 @@ function(input, output, session) {
     }
   })
   
-  output$result <- DT::renderDataTable({
-    if (!is.null(input$file1) & !is.null(input$file2)) {
-      if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
-        results <- variables$results
-      }
-      else {
-        showModal(modalDialog(
-          title = "Hey",
-          easyClose = TRUE,
-          footer = NULL,
-          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
-          br(),
-          "But you still can explore your data."
-        ))
-        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
-      }
-    }
-  })
+  # output$result <- DT::renderDataTable({
+  #   if (!is.null(input$file1) & !is.null(input$file2)) {
+  #     if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
+  #       results <- variables$results
+  #     }
+  #     else {
+  #       showModal(modalDialog(
+  #         title = "Hey",
+  #         easyClose = TRUE,
+  #         footer = NULL,
+  #         "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
+  #         br(),
+  #         "But you still can explore your data."
+  #       ))
+  #       data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
+  #     }
+  #   }
+  # })
   
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
@@ -694,13 +750,13 @@ function(input, output, session) {
     }
   })
   
-  output$show_predict_map <- renderPlot({
-    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
-      runAlgorithm(input$predictors_files, input$occ_file)
-      title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
-      plot(predict_variables$predictive_map, main = title_predictive_map)
-    }
-  })
+  # output$show_predict_map <- renderPlot({
+  #   if (!is.null(input$predictors_files) & predict_variables$can_run_algorithm) {
+  #     runAlgorithm(input$predictors_files, input$sp_read)
+  #     title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
+  #     plot(predict_variables$predictive_map, main = title_predictive_map)
+  #   }
+  # })
   
   output$select_algorithm <- renderUI({
     selectInput("select_input_algorithm", label = "Choose Algorithm",
@@ -709,7 +765,8 @@ function(input, output, session) {
   })
   
   output$info_training_testing <- DT::renderDataTable({
-    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
+    if (!is.null(input$predictors_files) & predict_variables$can_run_algorithm) {
+      runAlgorithm(input$predictors_files, variables$sp_read)
       df_info <- data.frame(info = c('Execution time: ', 
                                      'Algorithm: ', 
                                      'Training set: ', 
@@ -791,7 +848,7 @@ function(input, output, session) {
   })
   
   output$show_downloaded_data <- DT::renderDataTable({
-    predict_variables$data_from_DB
+    variables$sp_read
   })
   
   
