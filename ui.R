@@ -304,13 +304,25 @@ body <- dashboardBody(
       
       
       fluidRow(
+        
         box(
           width = 6,
           collapsible = TRUE,
-          title = "Evaluations",
+          title = "[TEST] Evaluations",
           status = "primary",
-          plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
+          DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
         ),
+        
+        
+        # box(
+        #   width = 6,
+        #   collapsible = TRUE,
+        #   title = "Evaluations",
+        #   status = "primary",
+        #   plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
+        # ),
+        
+       
         
         box(
           width = 6,
@@ -318,8 +330,10 @@ body <- dashboardBody(
           title = "Predictive Map",
           status = "primary",
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
-        ),
-        
+        )
+      ),
+      
+      fluidRow(
         box(
           width = 6,
           collapsible = TRUE,
@@ -327,8 +341,9 @@ body <- dashboardBody(
           status = "primary",
           DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
         )
-        
       )
+      
+      
     )
   )
 )

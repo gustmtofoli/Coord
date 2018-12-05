@@ -56,13 +56,13 @@ function(input, output, session) {
   predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
                                                       "Random Forest",
                                                       "GLM - Logistic Regression",
-                                                      "GBM - Gradient Boosting Machine",
-                                                      "KNN - k-nearest neighbors"), 
+                                                      "GBM - Gradient Boosting Machine"),
+                                                       
                                              method = c("svm", 
                                                         "rf",
                                                         "glm",
-                                                        "gbm",
-                                                        "knn")
+                                                        "gbm")
+                                                        
                                              )
   
   observeEvent(input$run_algorithm_btn, {
@@ -334,7 +334,7 @@ function(input, output, session) {
       }
       
       m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
-               test.percent = (100 - as.numeric(input$training_set)), n = 2)
+               test.percent = (100 - as.numeric(input$training_set)), n = 1)
       
       predict_variables$predictive_model <- m
       
@@ -876,6 +876,12 @@ function(input, output, session) {
     variables$sp_read
   })
   
+  output$info_evaluations <- DT::renderDataTable(({
+    if (!is.null(predict_variables$predictive_model)) {
+      evaluations <- getEvaluation(predict_variables$predictive_model)
+      evaluations
+    }
+  }))
   
   
 }

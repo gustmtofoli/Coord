@@ -87,16 +87,25 @@ sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
 
 
 # gerando sdmData =================================================================
+plot(sdmData_shapefile)
 d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
 d
+plot(d)
 # =================================================================================
 
 
 # modelo  =========================================================================
 m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars','svm'), replicatin='sub', 
-         test.percent = 25, n = 2)
-m
-getModelInfo(m)
+         test.percent = 25, n = 1)
+
+evaluations <- getEvaluation(m)
+evaluations
+
+slot(models$pb, "statistics")
+
+model_info <- getModelInfo(m)
+model_info
+
 roc(m)
 roc(m,smooth=T)
 # =================================================================================
