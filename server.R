@@ -80,7 +80,7 @@ function(input, output, session) {
     df_data <- occ2df(data_from_DB)
     colnames(df_data) <- c("sp", "long", "lat")
     if (!is.null(df_data) & nrow(df_data) > 0) {
-      variables$sp_read <- df_data[, 1:3]
+      variables$sp_read <- df_data[, 1:4]
       showModal(modalDialog(
         title = "Nice work!!",
         footer = NULL,
@@ -273,7 +273,7 @@ function(input, output, session) {
       showModal(modalDialog(
         title = "Hey",
         footer = NULL,
-        easyClose = TRUE,
+        easyClose = FALSE,
         "This may take some time... coffee?"
       ))
       
@@ -334,7 +334,7 @@ function(input, output, session) {
       }
       
       m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
-               test.percent = (100 - as.numeric(input$training_set)), n = 1)
+               test.percent = (100 - as.numeric(input$training_set)), n = as.numeric(input$number_of_executions))
       
       predict_variables$predictive_model <- m
       
@@ -775,7 +775,7 @@ function(input, output, session) {
   output$show_predict_map <- renderPlot({
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
       runAlgorithm(input$predictors_files, variables$sp_read)
-      title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
+      title_predictive_map <- paste0(" ", input$select_input_algorithm)
       if (!is.null(predict_variables$ensemble_map)) {
         plot(predict_variables$ensemble_map, main = title_predictive_map)
       }

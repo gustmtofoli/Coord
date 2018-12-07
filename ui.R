@@ -297,6 +297,7 @@ body <- dashboardBody(
           status = "primary",
           uiOutput("select_algorithm"),
           textInput("training_set", "Training Set (%): "),
+          textInput("number_of_executions", "Number of executions: "),
           actionButton("run_algorithm_btn", "Run", width = "100%")
         )
         
