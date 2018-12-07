@@ -15,15 +15,26 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Extract Data",
+    menuItem("Extract Species Data",
              menuSubItem(
-               "Upload Data",
+               "Upload Species Data",
                tabName = "coord"
              ),
              menuSubItem(
-               "From Data Bases",
+               "Species Data from Bases",
                tabName = "from_data_bases"
-             )),
+             )
+    ),
+    menuItem("Extract Predictors",
+             menuSubItem(
+               "Upload Predictors",
+               tabName = "não_existe_ainda"
+             ),
+             menuSubItem(
+               "Predictors from Data Bases",
+               tabName = "não_existe_ainda"
+             )
+    ),
     menuItem("Exploratory Data Analysis", tabName = "maps"),
     menuItem("Summary", tabName = "summary"),
     menuItem("Predict", tabName = "predict")
@@ -249,6 +260,10 @@ body <- dashboardBody(
     
     tabItem(
       "predict",
+      fluidRow(
+        infoBoxOutput("species_infobox"),
+        infoBoxOutput("predictors_infobox")
+      ),
       fluidRow(
         box(
           width = 6,

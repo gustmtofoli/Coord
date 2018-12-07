@@ -883,6 +883,26 @@ function(input, output, session) {
     }
   }))
   
+  output$species_infobox <- renderInfoBox({
+    infoBox(
+      "Species", 
+      "Loaded",
+      icon = icon("list"),
+      color = "green", 
+      fill = TRUE
+    )
+  })
+  
+  output$predictors_infobox <- renderInfoBox({
+    infoBox(
+      "Predictors", 
+      "Not loaded",
+      icon = icon("list"),
+      color = "red", 
+      fill = TRUE
+    )
+  })
+  
   
 }
 
