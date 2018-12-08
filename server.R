@@ -17,6 +17,7 @@ library(sp)
 library(caret)
 library(sdm)
 library(dismo)
+library(biomod2)
 
 function(input, output, session) {
 
@@ -24,6 +25,11 @@ function(input, output, session) {
                               sp_read = NULL, 
                               sp_without_outliers = NULL, 
                               results = NULL)
+  
+  status <- reactiveValues(species_status = FALSE,
+                           predictors_status = FALSE,
+                           species_value = "",
+                           predictors_value = "")
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
@@ -59,9 +65,9 @@ function(input, output, session) {
                                                       "GBM - Gradient Boosting Machine"),
                                                        
                                              method = c("svm", 
-                                                        "rf",
+                                                        "RF",
                                                         "glm",
-                                                        "gbm")
+                                                        "GBM")
                                                         
                                              )
   
@@ -81,6 +87,7 @@ function(input, output, session) {
     colnames(df_data) <- c("sp", "long", "lat")
     if (!is.null(df_data) & nrow(df_data) > 0) {
       variables$sp_read <- df_data[, 1:4]
+      status$species_status <- TRUE
       showModal(modalDialog(
         title = "Nice work!!",
         footer = NULL,
@@ -103,6 +110,7 @@ function(input, output, session) {
   
   observeEvent(input$predictors_files, {
     predict_variables$can_run_algorithm <- FALSE
+    status$predictors_status <- TRUE
   })
   
   observeEvent(input$occ_file, {
@@ -131,6 +139,7 @@ function(input, output, session) {
       secondary_variables$original_sp_nrow <- nrow(variables$sp_read)
       secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
       variables$sp_read <- unique(variables$sp_read)
+      status$species_status <- TRUE
     }
   })
   
@@ -318,12 +327,23 @@ function(input, output, session) {
       sdmdata=na.omit(sdmdata)
       # summary(sdmdata)
       
-      WGScoor2 <- sdmdata
-      coordinates(WGScoor2)=~long+lat
-      proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
-      sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+      # === SDM ===========================================================
+      # WGScoor2 <- sdmdata
+      # coordinates(WGScoor2)=~long+lat
+      # proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
+      # sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+      # 
+      # d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
+      # ===================================================================
       
-      d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
+      # === BIOMOD =========================================================
+      spName <- input$sp_name
+      myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata$pb,
+                                           expl.var = stck,
+                                           resp.xy = sdmdata[, c('long', 'lat')],
+                                           resp.name = spName)
+      
+      # ======================================================================
       
       
       algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
@@ -333,15 +353,39 @@ function(input, output, session) {
         algorithm <- c(algorithm, algo)
       }
       
-      m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
-               test.percent = (100 - as.numeric(input$training_set)), n = as.numeric(input$number_of_executions))
       
-      predict_variables$predictive_model <- m
+      # === SDM ========================================================================
+      # m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
+      #          test.percent = (100 - as.numeric(input$training_set)), n = as.numeric(input$number_of_executions))
+      # ================================================================================
+      
+      # === BIOMOD =====================================================================
+      
+      myBiomodOption <- BIOMOD_ModelingOptions()
+      myBiomodModelOut <- BIOMOD_Modeling(
+        myBiomodData,
+        models = algorithm,
+        models.options = myBiomodOption,
+        NbRunEval=as.numeric(input$number_of_executions),
+        DataSplit=as.numeric(input$training_set),
+        Prevalence=0.5,
+        VarImport=3, #length(stck@layers),
+        models.eval.meth = c('TSS','ROC'),
+        SaveObj = TRUE,
+        rescal.all.models = TRUE,
+        do.full.models = FALSE,
+        modeling.id = paste("só pra passar","FirstModeling",sep=""))
+      
+      # ================================================================================
+      
+      predict_variables$predictive_model <- myBiomodModelOut
       
       print(">>> model:")
       print(predict_variables$predictive_model)
       print(">>> model info:")
-      model_info <- getModelInfo(m)
+      # model_info <- getModelInfo(m)
+      model_info <- get_evaluations(myBiomodModelOut)
+      print("\n>>>>> MODELO")
       print(model_info)
       
       
@@ -385,11 +429,40 @@ function(input, output, session) {
       # auc= pROC::auc(roc)
       # predict_variables$auc <- roc(m)
       
+      #   SDM ==========================================================================
+      # e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
+      #                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
       
-      e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
-                     setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
+      # ===============================================================================
+      
+      myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
+                                             chosen.models = 'all',
+                                             em.by = 'all',
+                                             eval.metric = c('TSS'),
+                                             eval.metric.quality.threshold = c(0.7),
+                                             models.eval.meth = c('TSS','ROC'),
+                                             prob.mean = TRUE,
+                                             prob.cv = FALSE,
+                                             prob.ci = FALSE,
+                                             prob.ci.alpha = 0.05,
+                                             prob.median = FALSE,
+                                             committee.averaging = FALSE,
+                                             prob.mean.weight = TRUE,
+                                             prob.mean.weight.decay = 'proportional' )   
+      
+      # myBiomodEM
+      print("\n>>>>>>ENSEMBLE")
+      print(get_evaluations(myBiomodEM))
+      
+      myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
+                                              new.env = stck,
+                                              proj.name = 'current',
+                                              selected.models = 'all',
+                                              binary.meth = 'TSS',
+                                              compress = FALSE,
+                                              build.clamping.mask = FALSE)
 
-      predict_variables$ensemble_map <- e1
+      predict_variables$ensemble_map <- myBiomodProjection
       
       
       
@@ -775,9 +848,9 @@ function(input, output, session) {
   output$show_predict_map <- renderPlot({
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
       runAlgorithm(input$predictors_files, variables$sp_read)
-      title_predictive_map <- paste0(" ", input$select_input_algorithm)
+      # title_predictive_map <- paste0(" ", input$select_input_algorithm)
       if (!is.null(predict_variables$ensemble_map)) {
-        plot(predict_variables$ensemble_map, main = title_predictive_map)
+        plot(predict_variables$ensemble_map)
       }
     }
   })
@@ -877,18 +950,18 @@ function(input, output, session) {
   })
   
   output$info_evaluations <- DT::renderDataTable(({
-    if (!is.null(predict_variables$predictive_model)) {
-      evaluations <- getEvaluation(predict_variables$predictive_model)
-      evaluations
-    }
+    # if (!is.null(predict_variables$predictive_model)) {
+    #   evaluations <- getEvaluation(predict_variables$predictive_model)
+    #   evaluations
+    # }
   }))
   
   output$species_infobox <- renderInfoBox({
     infoBox(
       "Species", 
-      "Loaded",
+      ifelse(status$species_status, "Loaded", "Not loaded"),
       icon = icon("list"),
-      color = "green", 
+      color = ifelse(status$species_status, "green", "red"), 
       fill = TRUE
     )
   })
@@ -896,9 +969,9 @@ function(input, output, session) {
   output$predictors_infobox <- renderInfoBox({
     infoBox(
       "Predictors", 
-      "Not loaded",
+      ifelse(status$predictors_status, "Loaded", "Not loaded"),
       icon = icon("list"),
-      color = "red", 
+      color = ifelse(status$predictors_status, "green", "red"), 
       fill = TRUE
     )
   })

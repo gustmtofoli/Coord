@@ -112,18 +112,19 @@ roc(m,smooth=T)
 
 
 # predict =========================================================================
-p1 <- predict(m, newdata = stck, filename = 'p1.img') 
+p1 <- predict(m, newdata = stck, filename = 'p1.img', overwrite = TRUE) 
 plot(p1)
 nlayers(p1)
 plot(p1[[1:2]])
 
 # média
-p1m <- predict(m, newdata = stck, filename = 'p2m.img', mean=T)
+p1m <- predict(m, newdata = stck, filename = 'p2m.img', mean=T, overwrite = TRUE)
 plot(p1m)
 # =================================================================================
 
 
 # ensemble ========================================================================
+
 e1 <- ensemble(m, newdata = stck, filename = 'e1.img', 
                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE) 
 
