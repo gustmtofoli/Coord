@@ -1,0 +1,25 @@
+[general]
+creator=R package 'raster'
+created=2018-12-10 20:20:32
+[georeference]
+nrows=655
+ncols=589
+xmin=99.641666667
+ymin=1.266666667
+xmax=104.55
+ymax=6.725
+projection=+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=4
+bandorder=BIL
+minvalue=4:3:4:4
+maxvalue=1000:997:1000:999
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=Buceros.rhinoceros_AllData_RUN1_RF:Buceros.rhinoceros_AllData_RUN1_GBM:Buceros.rhinoceros_AllData_RUN2_RF:Buceros.rhinoceros_AllData_RUN2_GBM

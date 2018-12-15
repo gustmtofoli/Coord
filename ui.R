@@ -28,7 +28,7 @@ sidebar <- dashboardSidebar(
     menuItem("Extract Predictors",
              menuSubItem(
                "Upload Predictors",
-               tabName = "não_existe_ainda"
+               tabName = "upload_predictors"
              ),
              menuSubItem(
                "Predictors from Data Bases",
@@ -131,6 +131,26 @@ body <- dashboardBody(
           title = "Species", 
           status = "primary",
           DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
+        )
+      )
+    ),
+    
+    tabItem(
+      "upload_predictors",
+      fluidRow(
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Upload Predictors",
+          status = "primary",
+          fileInput('predictors_files', 'Predictors',
+                    accept = c(
+                      '.tif'
+                    ),
+                    multiple = TRUE
+          ),
+          uiOutput("show_predictors"),
+          plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
         )
       )
     ),
@@ -265,20 +285,20 @@ body <- dashboardBody(
         infoBoxOutput("predictors_infobox")
       ),
       fluidRow(
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "Upload Predictors",
-          status = "primary",
-          fileInput('predictors_files', 'Predictors',
-                    accept = c(
-                      '.tif'
-                    ),
-                    multiple = TRUE
-          ),
-          uiOutput("show_predictors"),
-          plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
-        ),
+        # box(
+        #   width = 6,
+        #   collapsible = TRUE,
+        #   title = "Upload Predictors",
+        #   status = "primary",
+        #   fileInput('predictors_files', 'Predictors',
+        #             accept = c(
+        #               '.tif'
+        #             ),
+        #             multiple = TRUE
+        #   ),
+        #   uiOutput("show_predictors"),
+        #   plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
+        # ),
         
         # box(
         #   width = 6,
@@ -306,7 +326,7 @@ body <- dashboardBody(
         # ),
         
         box(
-          width = 6,
+          width = 4,
           collapsible = TRUE,
           title = "Algorithm", 
           status = "primary",
@@ -314,6 +334,14 @@ body <- dashboardBody(
           textInput("training_set", "Training Set (%): "),
           textInput("number_of_executions", "Number of executions: "),
           actionButton("run_algorithm_btn", "Run", width = "100%")
+        ),
+        
+        box(
+          width = 8,
+          collapsible = TRUE,
+          title = "[TEST] Evaluations",
+          status = "primary",
+          DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
         )
         
       ),
@@ -321,13 +349,7 @@ body <- dashboardBody(
       
       fluidRow(
         
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "[TEST] Evaluations",
-          status = "primary",
-          DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
-        ),
+        
         
         
         # box(
@@ -341,7 +363,7 @@ body <- dashboardBody(
        
         
         box(
-          width = 6,
+          width = 12,
           collapsible = TRUE,
           title = "Predictive Map",
           status = "primary",
