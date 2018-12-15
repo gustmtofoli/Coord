@@ -85,15 +85,22 @@ myBiomodModelOut <- BIOMOD_Modeling(
   NbRunEval=1,
   DataSplit=80,
   Prevalence=0.5,
-  VarImport="all", #length(stck@layers),
+  VarImport=3, #length(stck@layers),
   models.eval.meth = c('TSS','ROC'),
   SaveObj = TRUE,
   rescal.all.models = TRUE,
   do.full.models = FALSE,
-  modeling.id = paste("só pra passar","FirstModeling",sep=""))
+  modeling.id = "dsadsa")
 
 myBiomodModelOut
-get_evaluations(myBiomodModelOut)
+evaluations <- get_evaluations(myBiomodModelOut)
+colnames(evaluations)
+df_eval <- data.frame(evaluations)
+df_eval[, 5]
+
+
+
+
 # =================================================================================
 
 # 4. Doing Ensemble Modelling

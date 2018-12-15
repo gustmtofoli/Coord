@@ -390,6 +390,7 @@ function(input, output, session) {
       
       
       
+      
       # pa <- read.csv(occ_file$datapath, header = input$header,
       #                sep = input$sep, quote = input$quote)
       # n <- runif(1, min=1, max=999999);
@@ -950,11 +951,30 @@ function(input, output, session) {
   })
   
   output$info_evaluations <- DT::renderDataTable(({
-    # if (!is.null(predict_variables$predictive_model)) {
-    #   evaluations <- getEvaluation(predict_variables$predictive_model)
-    #   evaluations
-    # }
+    if (!is.null(predict_variables$predictive_model)) {
+      evaluations <- get_evaluations(predict_variables$predictive_model)
+      df_evaluations <- data.frame(evaluations)
+      # df_evaluations[1, ]
+      df_eval_model1 <- data.frame(testing_data = df_eval[, 1],
+                                   cutoff = df_eval[, 2],
+                                   sensitivity = df_eval[, 3],
+                                   specificity = df_eval[, 4])
+      # # colnames(df_evaluations) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+      df_eval_model1
+    }
   }))
+  
+  output$info_eval_AUC <- DT::renderDataTable({
+    if (!is.null(predict_variables$predictive_model)) {
+      evaluations <- get_evaluations(predict_variables$predictive_model)
+      df_eval <- data.frame(evaluations)
+      df_eval_auc <- data.frame(model.1 = df_eval[2, 1:4],
+                                model.2 = df_eval[2, 5:8])
+      colnames(df_eval_auc) <- c("testing_data", "cutoff", "sensitivity", "specificity")
+      df_eval_auc
+    }
+    
+  })
   
   output$species_infobox <- renderInfoBox({
     infoBox(

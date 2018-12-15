@@ -335,20 +335,40 @@ body <- dashboardBody(
           textInput("number_of_executions", "Number of executions: "),
           actionButton("run_algorithm_btn", "Run", width = "100%")
         ),
+        # 
+        # uiOutput("info_eval_tab_test") %>% withSpinner(color="#0dc5c1"),
+        tabBox(
+          title = "[TEST TABBOX] Evaluations",
+          width = 8,
+          # The id lets us use input$tabset1 on the server to find the current tab
+          id = "info_eval_tab_test",
+          tabPanel("AUC", DT::dataTableOutput("info_eval_AUC")),
+          tabPanel("TSS", "TSS")
+        ),
+        # tabBox(
+        #   width = 8,
+        #   # collapsible = TRUE,
+        #   title = "[TEST TABBOX] Evaluations",
+        #   status = "primary",
+        #   
+        # ),
         
         box(
-          width = 8,
-          collapsible = TRUE,
+          width = 12,
+          # collapsible = TRUE,
           title = "[TEST] Evaluations",
           status = "primary",
           DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
         )
+        
+        
         
       ),
       
       
       fluidRow(
         
+      
         
         
         
