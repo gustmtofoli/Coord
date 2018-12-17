@@ -93,11 +93,19 @@ myBiomodModelOut <- BIOMOD_Modeling(
   modeling.id = "dsadsa")
 
 myBiomodModelOut
+myBiomodModelOut@models.computed[1]
 evaluations <- get_evaluations(myBiomodModelOut)
 colnames(evaluations)
+evaluations
 df_eval <- data.frame(evaluations)
-df_eval[, 5]
+df_eval
+nrow(df_eval)
+df_eval[1, ]
 
+new <- data.frame(df_eval[1, 1:4])
+rownames(new) <-c('GBM')
+new['RF', ] <- df_eval[1, 5:8]
+new
 
 
 
@@ -107,8 +115,8 @@ df_eval[, 5]
 myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
                                        chosen.models = 'all',
                                        em.by = 'all',
-                                       eval.metric = c('TSS'),
-                                       eval.metric.quality.threshold = c(0.7),
+                                       eval.metric = c("ROC", "TSS"),
+                                       eval.metric.quality.threshold = NULL,
                                        models.eval.meth = c('TSS','ROC'),
                                        prob.mean = TRUE,
                                        prob.cv = FALSE,
@@ -120,7 +128,10 @@ myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
                                        prob.mean.weight.decay = 'proportional' )   
 
 myBiomodEM
-get_evaluations(myBiomodEM)
+length(myBiomodEM@em.computed)
+myBiomodEM@em.by
+eval_em <- get_evaluations(myBiomodEM)
+
 
 
 

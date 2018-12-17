@@ -44,6 +44,7 @@ function(input, output, session) {
                                       auc = NULL,
                                       predictive_map = NULL,
                                       predictive_model = NULL,
+                                      ensemble_model = NULL,
                                       execution_time = 0,
                                       can_run_algorithm = FALSE,
                                       data_from_DB = NULL,
@@ -59,15 +60,25 @@ function(input, output, session) {
                                                      "obis",
                                                      "ala"))
   
-  predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
-                                                      "Random Forest",
+  predict_variables$algorithms <- data.frame(name = c("GAM - Generalized Linear Model", 
+                                                      "RF - Random Forest",
                                                       "GLM - Logistic Regression",
-                                                      "GBM - Gradient Boosting Machine"),
+                                                      "GBM - Gradient Boosting Machine",
+                                                      "CTA - Classification Tree Analysis",
+                                                      "ANN - Artificial Neural Network",
+                                                      "BIOCLIM - Surface Range Envelop (SRE)",
+                                                      "FDA - Flexible Discriminant Analysis",
+                                                      "MARS - Multiple Adaptive Regression Splines "),
                                                        
-                                             method = c("svm", 
+                                             method = c("GAM", 
                                                         "RF",
-                                                        "glm",
-                                                        "GBM")
+                                                        "GLM",
+                                                        "GBM",
+                                                        "CTA",
+                                                        "ANN",
+                                                        "SRE",
+                                                        "FDA",
+                                                        "MARS")
                                                         
                                              )
   
@@ -371,7 +382,7 @@ function(input, output, session) {
         Prevalence=0.5,
         VarImport=3, #length(stck@layers),
         models.eval.meth = c('TSS','ROC'),
-        SaveObj = TRUE,
+        SaveObj = FALSE,
         rescal.all.models = TRUE,
         do.full.models = FALSE,
         modeling.id = paste("só pra passar","FirstModeling",sep=""))
@@ -454,6 +465,7 @@ function(input, output, session) {
       # myBiomodEM
       print("\n>>>>>>ENSEMBLE")
       print(get_evaluations(myBiomodEM))
+      predict_variables$ensemble_model <- myBiomodEM
       
       myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
                                               new.env = stck,
@@ -862,6 +874,12 @@ function(input, output, session) {
                 selected = 1, multiple = TRUE)
   })
   
+  output$select_eval_method <- renderUI({
+    selectInput("select_input_eval_method", label = "Choose evaluation method(s): ",
+                choices = c("ROC", "TSS", "KAPPA"),
+                selected = 1, multiple = TRUE)
+  })
+  
   output$info_training_testing <- DT::renderDataTable({
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
       df_info <- data.frame(info = c('Execution time: ', 
@@ -951,29 +969,69 @@ function(input, output, session) {
   })
   
   output$info_evaluations <- DT::renderDataTable(({
-    if (!is.null(predict_variables$predictive_model)) {
-      evaluations <- get_evaluations(predict_variables$predictive_model)
-      df_evaluations <- data.frame(evaluations)
-      # df_evaluations[1, ]
-      df_eval_model1 <- data.frame(testing_data = df_eval[, 1],
-                                   cutoff = df_eval[, 2],
-                                   sensitivity = df_eval[, 3],
-                                   specificity = df_eval[, 4])
-      # # colnames(df_evaluations) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-      df_eval_model1
-    }
+    # if (!is.null(predict_variables$predictive_model)) {
+    #   evaluations <- get_evaluations(predict_variables$predictive_model)
+    #   df_evaluations <- data.frame(evaluations)
+    #   # df_evaluations[1, ]
+    #   df_eval_model1 <- data.frame(testing_data = df_eval[, 1],
+    #                                cutoff = df_eval[, 2],
+    #                                sensitivity = df_eval[, 3],
+    #                                specificity = df_eval[, 4])
+    #   # # colnames(df_evaluations) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+    #   df_eval_model1
+    # }
   }))
   
   output$info_eval_AUC <- DT::renderDataTable({
-    if (!is.null(predict_variables$predictive_model)) {
-      evaluations <- get_evaluations(predict_variables$predictive_model)
+    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
+      models <- predict_variables$predictive_model
+      ensemble_model <- predict_variables$ensemble_model
+      ensemble_evaluations <- get_evaluations(ensemble_model)
+      df_eval_ensemble <- data.frame(ensemble_evaluations)
+      evaluations <- get_evaluations(models)
       df_eval <- data.frame(evaluations)
-      df_eval_auc <- data.frame(model.1 = df_eval[2, 1:4],
-                                model.2 = df_eval[2, 5:8])
-      colnames(df_eval_auc) <- c("testing_data", "cutoff", "sensitivity", "specificity")
+      ini_col <- 1
+      df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
+      rownames(df_eval_auc) <-c(models@models.computed[1])
+      ini_col <- ini_col + 3
+      for (i in 2:length(models@models.computed)) {
+        ini_col <- ini_col + 1
+        df_eval_auc[models@models.computed[i], ] <- df_eval[2, ini_col:(ini_col+3)]
+        ini_col <- ini_col + 3
+      }
+      
+      colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
       df_eval_auc
     }
-    
+  })
+  
+  output$info_eval_TSS <- DT::renderDataTable({
+    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
+      ensemble_model <- predict_variables$ensemble_model
+      ensemble_evaluations <- get_evaluations(ensemble_model)
+      df_eval_ensemble <- data.frame(ensemble_evaluations)
+      models <- predict_variables$predictive_model
+      evaluations <- get_evaluations(models)
+      df_eval <- data.frame(evaluations)
+      ini_col <- 1
+      df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
+      rownames(df_eval_tss) <-c(models@models.computed[1])
+      ini_col <- ini_col + 3
+      for (i in 2:length(models@models.computed)) {
+        ini_col <- ini_col + 1
+        df_eval_tss[models@models.computed[i], ] <- df_eval[1, ini_col:(ini_col+3)]
+        ini_col <- ini_col + 3
+      }
+      
+      ini_col <- 1
+      for (j in 1:length(ensemble_model@em.computed)) {
+        df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble[2, ini_col:(ini_col+3)]
+        ini_col <- ini_col + 4
+      }
+      
+      colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+      df_eval_tss
+    }
   })
   
   output$species_infobox <- renderInfoBox({

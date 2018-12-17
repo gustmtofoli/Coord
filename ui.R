@@ -21,7 +21,7 @@ sidebar <- dashboardSidebar(
                tabName = "coord"
              ),
              menuSubItem(
-               "Species Data from Bases",
+               "From Data Bases",
                tabName = "from_data_bases"
              )
     ),
@@ -31,7 +31,7 @@ sidebar <- dashboardSidebar(
                tabName = "upload_predictors"
              ),
              menuSubItem(
-               "Predictors from Data Bases",
+               "From Data Bases",
                tabName = "não_existe_ainda"
              )
     ),
@@ -331,20 +331,23 @@ body <- dashboardBody(
           title = "Algorithm", 
           status = "primary",
           uiOutput("select_algorithm"),
+          uiOutput("select_eval_method"),
           textInput("training_set", "Training Set (%): "),
           textInput("number_of_executions", "Number of executions: "),
+          tags$hr(),
+          checkboxInput("ensemble_cb", label = "Ensemble", value = FALSE),
           actionButton("run_algorithm_btn", "Run", width = "100%")
         ),
-        # 
-        # uiOutput("info_eval_tab_test") %>% withSpinner(color="#0dc5c1"),
-        tabBox(
-          title = "[TEST TABBOX] Evaluations",
-          width = 8,
-          # The id lets us use input$tabset1 on the server to find the current tab
-          id = "info_eval_tab_test",
-          tabPanel("AUC", DT::dataTableOutput("info_eval_AUC")),
-          tabPanel("TSS", "TSS")
-        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Execution Info",
+          status = "primary",
+          DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
+        )
+
+        
         # tabBox(
         #   width = 8,
         #   # collapsible = TRUE,
@@ -353,16 +356,27 @@ body <- dashboardBody(
         #   
         # ),
         
-        box(
+        # box(
+        #   width = 12,
+        #   # collapsible = TRUE,
+        #   title = "[TEST] Evaluations",
+        #   status = "primary",
+        #   DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
+        # )
+        
+        
+        
+      ),
+      
+      fluidRow(
+        tabBox(
+          title = "Model Evaluations",
           width = 12,
-          # collapsible = TRUE,
-          title = "[TEST] Evaluations",
-          status = "primary",
-          DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
+          # The id lets us use input$tabset1 on the server to find the current tab
+          id = "info_eval_tab_test",
+          tabPanel("ROC", DT::dataTableOutput("info_eval_AUC")%>% withSpinner(color="#0dc5c1")),
+          tabPanel("TSS", DT::dataTableOutput("info_eval_TSS")%>% withSpinner(color="#0dc5c1"))
         )
-        
-        
-        
       ),
       
       
@@ -389,17 +403,11 @@ body <- dashboardBody(
           status = "primary",
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         )
-      ),
-      
-      fluidRow(
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "Execution Info",
-          status = "primary",
-          DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
-        )
       )
+      
+      # fluidRow(
+      #   
+      # )
       
       
     )
