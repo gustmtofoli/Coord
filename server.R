@@ -23,6 +23,7 @@ function(input, output, session) {
 
   variables <- reactiveValues(grid_read = NULL, 
                               sp_read = NULL, 
+                              sp_download_db = NULL,
                               sp_without_outliers = NULL, 
                               results = NULL)
   
@@ -86,6 +87,8 @@ function(input, output, session) {
     predict_variables$can_run_algorithm <- TRUE
   })
   
+  
+  
   observeEvent(input$download_from_DB, {
     showModal(modalDialog(
       title = "Hmmm...",
@@ -93,11 +96,21 @@ function(input, output, session) {
       easyClose = FALSE,
       "Searching Data..."
     ))
-    data_from_DB <- occ(input$sp_name, from = input$select_data_bases)
+    species_download <- c()
+    
+    if (input$upload_file_switch_btn) {
+      species_download <- input$selec_filter_download_sp
+    }
+    else {
+      species_download <- input$sp_name
+    }
+    
+    data_from_DB <- occ(species_download, from = input$select_data_bases)
     df_data <- occ2df(data_from_DB)
-    colnames(df_data) <- c("sp", "long", "lat")
+    colnames(df_data) <- c("sp", "lon", "lat", "data base")
+    print(df_data)
     if (!is.null(df_data) & nrow(df_data) > 0) {
-      variables$sp_read <- df_data[, 1:4]
+      variables$sp_download_db <- df_data[, 1:4]
       status$species_status <- TRUE
       showModal(modalDialog(
         title = "Nice work!!",
@@ -860,12 +873,15 @@ function(input, output, session) {
   
   output$show_predict_map <- renderPlot({
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
+      variables$sp_read <- variables$sp_download_db[, 1:3]
+      colnames(variables$sp_read) <- c("sp", "long", "lat")
       runAlgorithm(input$predictors_files, variables$sp_read)
       # title_predictive_map <- paste0(" ", input$select_input_algorithm)
       if (!is.null(predict_variables$ensemble_map)) {
         plot(predict_variables$ensemble_map)
       }
     }
+    predict_variables$can_run_algorithm <- FALSE
   })
   
   output$select_algorithm <- renderUI({
@@ -965,7 +981,7 @@ function(input, output, session) {
   })
   
   output$show_downloaded_data <- DT::renderDataTable({
-    variables$sp_read
+    variables$sp_download_db
   })
   
   output$info_evaluations <- DT::renderDataTable(({
@@ -1050,6 +1066,48 @@ function(input, output, session) {
       ifelse(status$predictors_status, "Loaded", "Not loaded"),
       icon = icon("list"),
       color = ifelse(status$predictors_status, "green", "red"), 
+      fill = TRUE
+    )
+  })
+  
+  output$filter_sp_download <- renderUI({
+    if (!is.null(input$file_species_download)) {
+      file_species_download <- input$file_species_download
+      species_download <- grid_read <- read.csv(file_species_download$datapath, header = input$header,
+                                      sep = input$sep, quote = input$quote)
+      species_name <- unique(species_download$sp)
+      selectInput("selec_filter_download_sp", label = h5("Select specie"),
+                  choices = species_name,
+                  selected = 1, multiple = TRUE)
+    }
+  })
+  
+  output$sp_download_na <- renderInfoBox({
+    infoBox(
+      "Number of NA",
+      "TEST",
+      icon = icon("list"),
+      color = "navy", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_count <- renderInfoBox({
+    infoBox(
+      "Number of Species",
+      "TEST",
+      icon = icon("list"),
+      color = "navy", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_duplicated <- renderInfoBox({
+    infoBox(
+      "Duplicated",
+      "TEST",
+      icon = icon("list"),
+      color = "navy", 
       fill = TRUE
     )
   })

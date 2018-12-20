@@ -1,0 +1,32 @@
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/calib\.lines
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/ensemble\.models/ensemble\.models\.predictions/Buceros\.rhinoceros_EMmeanByTSS_mergedAlgo_mergedRun_mergedData\.predictions
+
+*.predictions
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/formated\.input\.data
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/models\.evaluation
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/models\.options
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/models\.prediction
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/models\.prediction\.eval
+
+Buceros\.rhinoceros/\.BIOMOD_DATA/só pra passarFirstModeling/variables\.importance
+
+Buceros\.rhinoceros/Buceros\.rhinoceros\.só pra passarFirstModeling\.models\.out
+
+Buceros\.rhinoceros/Buceros\.rhinoceros\.só pra passarFirstModelingensemble\.models\.out
+
+Buceros\.rhinoceros/models/só pra passarFirstModeling/Buceros\.rhinoceros_AllData_RUN1_GAM
+
+Buceros\.rhinoceros/models/só pra passarFirstModeling/Buceros\.rhinoceros_AllData_RUN1_RF
+
+*.rhinoceros_EMmeanByTSS_mergedAlgo_mergedRun_mergedData
+
+Buceros\.rhinoceros/models/só pra passarFirstModeling/
+
+Buceros\.rhinoceros/proj_current/

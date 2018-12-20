@@ -4,6 +4,8 @@ library(DT)
 library(plotly)
 library(shinycssloaders)
 library(highcharter)
+library(shinyWidgets)
+library(shinyjs)
 
 
 header <- dashboardHeader(
@@ -43,6 +45,7 @@ sidebar <- dashboardSidebar(
 
 
 body <- dashboardBody(
+  useShinyjs(),
   tabItems(
     tabItem("coord",
       fluidRow(
@@ -116,22 +119,60 @@ body <- dashboardBody(
       "from_data_bases",
       fluidRow(
         box(
-          width = 4,
+          width = 12,
           collapsible = TRUE,
-          title = "Download Species Data", 
-          status = "primary",
-          textInput("sp_name", "Species name: "),
-          uiOutput("select_DB"),
-          actionButton("download_from_DB", "Search")
+          materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file with specie(s) name:", status = "primary", right = FALSE),
+          tags$hr(),
+          fileInput('file_species_download', "Choose species presence file to upload",
+                    accept = c(
+                      'text/csv',
+                      'text/comma-separated-values',
+                      'text/tab-separated-values',
+                      'text/plain',
+                      '.csv',
+                      '.tsv'
+                    )
+          ),
+          tags$hr(),
+          uiOutput("filter_sp_download"),
+          actionButton("selet_all_download_btn", "Select all"),
+          actionButton("clean_download_btn", "Clean")
         ),
-      
+        
         box(
-          width = 8,
+          width = 12,
+          collapsible = TRUE,
+          textInput("sp_name", "Species name: ")
+        ),
+        
+       
+        box(
+          width = 12,
+          collapsible = TRUE,
+          # title = "Download Species Data", 
+          status = "primary",
+         
+          # tags$hr(),
+          uiOutput("select_DB"),
+          tags$hr(),
+          actionButton("download_from_DB", "Search")
+        )
+      ),
+      
+      fluidRow(
+        box(
+          width = 12,
           collapsible = TRUE,
           title = "Species", 
           status = "primary",
           DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
         )
+        
+      ),
+      fluidRow(
+        infoBoxOutput("sp_download_duplicated"),
+        infoBoxOutput("sp_download_count"),
+        infoBoxOutput("sp_download_na")
       )
     ),
     
