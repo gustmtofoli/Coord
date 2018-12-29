@@ -7,7 +7,6 @@ library(highcharter)
 library(shinyWidgets)
 library(shinyjs)
 
-
 header <- dashboardHeader(
   title = "Coord",
   titleWidth = 187
@@ -120,29 +119,45 @@ body <- dashboardBody(
       fluidRow(
         box(
           width = 12,
-          collapsible = TRUE,
-          materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file with specie(s) name:", status = "primary", right = FALSE),
-          tags$hr(),
-          fileInput('file_species_download', "Choose species presence file to upload",
-                    accept = c(
-                      'text/csv',
-                      'text/comma-separated-values',
-                      'text/tab-separated-values',
-                      'text/plain',
-                      '.csv',
-                      '.tsv'
-                    )
-          ),
-          tags$hr(),
-          uiOutput("filter_sp_download"),
-          actionButton("selet_all_download_btn", "Select all"),
-          actionButton("clean_download_btn", "Clean")
+          collapsible = FALSE,
+          materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file: ", status = "primary", right = FALSE)
         ),
         
-        box(
-          width = 12,
-          collapsible = TRUE,
-          textInput("sp_name", "Species name: ")
+        conditionalPanel(
+          "input.upload_file_switch_btn",
+          box(
+            width = 12,
+            collapsible = TRUE,
+            # materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file with specie(s) name:", status = "primary", right = FALSE),
+            # tags$hr(),
+            fileInput('file_species_download', "Upload species file:",
+                      accept = c(
+                        'text/csv',
+                        'text/comma-separated-values',
+                        'text/tab-separated-values',
+                        'text/plain',
+                        '.csv',
+                        '.tsv'
+                      )
+            ),
+            tags$hr(),
+            # conditionalPanel(
+            #   "input.file_species_download",
+              uiOutput("filter_sp_download"),
+              actionButton("selet_all_download_sp_btn", "Select all"),
+              actionButton("clean_download_sp_btn", "Clean")
+              
+            # )
+          )
+        ),
+        
+        conditionalPanel(
+          "!input.upload_file_switch_btn",
+          box(
+            width = 12,
+            collapsible = TRUE,
+            textInput("sp_name", "Type species name: ")
+          )
         ),
         
        
@@ -163,7 +178,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Species", 
+          title = "Downloaded Data", 
           status = "primary",
           DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
         )
@@ -172,7 +187,8 @@ body <- dashboardBody(
       fluidRow(
         infoBoxOutput("sp_download_duplicated"),
         infoBoxOutput("sp_download_count"),
-        infoBoxOutput("sp_download_na")
+        infoBoxOutput("sp_download_na"),
+        infoBoxOutput("sp_download_db")
       )
     ),
     
@@ -325,88 +341,29 @@ body <- dashboardBody(
         infoBoxOutput("species_infobox"),
         infoBoxOutput("predictors_infobox")
       ),
-      fluidRow(
-        # box(
-        #   width = 6,
-        #   collapsible = TRUE,
-        #   title = "Upload Predictors",
-        #   status = "primary",
-        #   fileInput('predictors_files', 'Predictors',
-        #             accept = c(
-        #               '.tif'
-        #             ),
-        #             multiple = TRUE
-        #   ),
-        #   uiOutput("show_predictors"),
-        #   plotOutput("show_predictors_test") %>% withSpinner(color="#0dc5c1")
-        # ),
-        
-        # box(
-        #   width = 6,
-        #   collapsible = TRUE,
-        #   title = "Presence/Absence File", 
-        #   status = "primary",
-        #   
-        #   fileInput('occ_file', 'Occurrence file',
-        #             accept = c(
-        #               'text/csv',
-        #               'text/comma-separated-values',
-        #               'text/tab-separated-values',
-        #               'text/plain',
-        #               '.csv',
-        #               '.tsv'
-        #             )
-        #   ),
-        #   tags$hr(),
-        #   checkboxInput('header', 'Header', TRUE),
-        #   radioButtons('sep', 'Separator',
-        #                c(Comma=',',
-        #                  Semicolon=';',
-        #                  Tab='\t'),
-        #                ',')
-        # ),
-        
-        box(
-          width = 4,
-          collapsible = TRUE,
-          title = "Algorithm", 
-          status = "primary",
-          uiOutput("select_algorithm"),
-          uiOutput("select_eval_method"),
-          textInput("training_set", "Training Set (%): "),
-          textInput("number_of_executions", "Number of executions: "),
-          tags$hr(),
-          checkboxInput("ensemble_cb", label = "Ensemble", value = FALSE),
-          actionButton("run_algorithm_btn", "Run", width = "100%")
-        ),
-        
-        box(
-          width = 6,
-          collapsible = TRUE,
-          title = "Execution Info",
-          status = "primary",
-          DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
-        )
 
-        
-        # tabBox(
-        #   width = 8,
-        #   # collapsible = TRUE,
-        #   title = "[TEST TABBOX] Evaluations",
-        #   status = "primary",
-        #   
-        # ),
-        
-        # box(
-        #   width = 12,
-        #   # collapsible = TRUE,
-        #   title = "[TEST] Evaluations",
-        #   status = "primary",
-        #   DT::dataTableOutput("info_evaluations") %>% withSpinner(color="#0dc5c1")
-        # )
-        
-        
-        
+      fluidRow (
+            box(
+              width = 4,
+              collapsible = TRUE,
+              title = "Algorithm", 
+              status = "primary",
+              uiOutput("select_algorithm"),
+              uiOutput("select_eval_method"),
+              textInput("training_set", "Training Set (%): "),
+              textInput("number_of_executions", "Number of executions: "),
+              tags$hr(),
+              checkboxInput("ensemble_cb", label = "Ensemble", value = FALSE),
+              actionButton("run_algorithm_btn", "Run", width = "100%")
+            ),
+            
+            box(
+              width = 6,
+              collapsible = TRUE,
+              title = "Execution Info",
+              status = "primary",
+              DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
+            )
       ),
       
       fluidRow(
@@ -423,10 +380,6 @@ body <- dashboardBody(
       
       fluidRow(
         
-      
-        
-        
-        
         # box(
         #   width = 6,
         #   collapsible = TRUE,
@@ -434,8 +387,6 @@ body <- dashboardBody(
         #   status = "primary",
         #   plotOutput("show_auc_curve") %>% withSpinner(color="#0dc5c1")
         # ),
-        
-       
         
         box(
           width = 12,
@@ -445,12 +396,6 @@ body <- dashboardBody(
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         )
       )
-      
-      # fluidRow(
-      #   
-      # )
-      
-      
     )
   )
 )
@@ -459,10 +404,10 @@ body <- dashboardBody(
 
 
 shinyUI(
-dashboardPage(
-  skin = "green",
-  header,
-  sidebar,
-  body
-)
+  dashboardPage(
+    skin = "green",
+    header,
+    sidebar,
+    body
+  )
 )

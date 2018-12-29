@@ -107,7 +107,7 @@ function(input, output, session) {
     
     data_from_DB <- occ(species_download, from = input$select_data_bases)
     df_data <- occ2df(data_from_DB)
-    colnames(df_data) <- c("sp", "lon", "lat", "data base")
+    colnames(df_data) <- c("sp", "lon", "lat", "data_base")
     print(df_data)
     if (!is.null(df_data) & nrow(df_data) > 0) {
       variables$sp_download_db <- df_data[, 1:4]
@@ -520,24 +520,24 @@ function(input, output, session) {
     }
   })
   
-  # output$result <- DT::renderDataTable({
-  #   if (!is.null(input$file1) & !is.null(input$file2)) {
-  #     if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
-  #       results <- variables$results
-  #     }
-  #     else {
-  #       showModal(modalDialog(
-  #         title = "Hey",
-  #         easyClose = TRUE,
-  #         footer = NULL,
-  #         "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
-  #         br(),
-  #         "But you still can explore your data."
-  #       ))
-  #       data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
-  #     }
-  #   }
-  # })
+  output$result <- DT::renderDataTable({
+    if (!is.null(input$file1) & !is.null(input$file2)) {
+      if ((nrow(variables$sp_read)*nrow(variables$grid_read) <= 100000)) {
+        results <- variables$results
+      }
+      else {
+        showModal(modalDialog(
+          title = "Hey",
+          easyClose = TRUE,
+          footer = NULL,
+          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
+          br(),
+          "But you still can explore your data."
+        ))
+        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
+      }
+    }
+  })
   
   output$download_results <- downloadHandler(
     filename = function(){"results.csv"},
@@ -732,11 +732,35 @@ function(input, output, session) {
   })
   
   clean_all_filter <- observeEvent(input$clean_all_filter_btn, {
-    sp_read <- variables$sp_read
-    species_name = unique(sp_read$sp)
+    sp_download_db <- variables$sp_download_db
+    species_name = unique(sp_download_db$sp)
     updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
                       choices = species_name, 
                       selected = 1)
+  })
+  
+  observeEvent(input$selet_all_download_sp_btn, {
+    if (!is.null(input$file_species_download)) {
+      uploaded_file <- input$file_species_download
+      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
+                                 sep = ",")
+      species_name = unique(uploaded_data$sp)
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select specie"), 
+                        choices = species_name, 
+                        selected = species_name)
+    }
+  })
+  
+  observeEvent(input$clean_download_sp_btn, {
+    if (!is.null(input$file_species_download)) {
+      uploaded_file <- input$file_species_download
+      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
+                                sep = ",")
+      species_name = unique(uploaded_data$sp)
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select specie"), 
+                        choices = species_name, 
+                        selected = 1)
+    }
   })
   
   output$sp_occ_scatter_plot <- renderPlotly({
@@ -1083,31 +1107,50 @@ function(input, output, session) {
   })
   
   output$sp_download_na <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    number_of_na <- abs(nrow(na.omit(downloaded_species)) - nrow(downloaded_species))
     infoBox(
       "Number of NA",
-      "TEST",
+      paste0(number_of_na),
       icon = icon("list"),
-      color = "navy", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
   
   output$sp_download_count <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    number_of_species <- length(unique(downloaded_species$sp))
     infoBox(
       "Number of Species",
-      "TEST",
+      paste0(number_of_species),
       icon = icon("list"),
-      color = "navy", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
   
   output$sp_download_duplicated <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    downloaded_species <- na.omit(downloaded_species)
+    n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species), ])
     infoBox(
       "Duplicated",
-      "TEST",
+      paste0(n_duplicated_rows),
       icon = icon("list"),
-      color = "navy", 
+      color = "light-blue", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_db <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    n_data_bases <- length(unique(downloaded_species$data_base))
+    infoBox(
+      "Data Bases with records",
+      paste0(n_data_bases),
+      icon = icon("list"),
+      color = "light-blue", 
       fill = TRUE
     )
   })
