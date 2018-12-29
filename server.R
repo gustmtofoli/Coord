@@ -15,7 +15,7 @@ library(maptools)
 library(rgdal)
 library(sp)
 library(caret)
-library(sdm)
+# library(sdm)
 library(dismo)
 library(biomod2)
 
