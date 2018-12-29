@@ -26,10 +26,13 @@ install.packages('units')
 install.packages('rgdal')
 install.packages('sf')
 install.packages('rgeos')
-install.packages('geojsonio')
+
+
+
 
 install.packages('openssl')
 install.packages('httr')
+install.packages('geojsonio')
 install.packages('plotly')
 
 install.packages('shinycssloaders')
@@ -42,5 +45,7 @@ Sys.setenv(JAVA_HOME='/usr/lib/jvm/java-8-oracle/jre')
 # install.packages('sdm')
 # install.packages('SSDM')
 install.packages('biomod2')
-install.packages('caretEnsemble')
+install.packages('caret')
+install.packages('spocc')
 
+install.packages('caretEnsemble')
