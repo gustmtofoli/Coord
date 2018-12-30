@@ -180,14 +180,15 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Downloaded Data", 
           status = "primary",
-          DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1")
+          DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1"),
+          downloadButton("download_data_from_db_btn", "Download")
         )
         
       ),
       fluidRow(
         infoBoxOutput("sp_download_duplicated"),
-        infoBoxOutput("sp_download_count"),
         infoBoxOutput("sp_download_na"),
+        infoBoxOutput("sp_download_count"),
         infoBoxOutput("sp_download_db")
       )
     ),
@@ -254,14 +255,16 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Duplicated records in species",
           status = "success",
-          DT::dataTableOutput("duplicated_sp")
+          DT::dataTableOutput("duplicated_sp"),
+          downloadButton("download_duplicated_sp", "Download")
         ),
         box(
           width = 4,
           collapsible = TRUE,
           title = "Duplicated coordinates in grid",
           status = "success",
-          DT::dataTableOutput("duplicated_grid")
+          DT::dataTableOutput("duplicated_grid"),
+          downloadButton("download_duplicated_grid", "Download")
         )
       )
     ),

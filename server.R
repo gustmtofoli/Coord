@@ -24,13 +24,15 @@ function(input, output, session) {
   variables <- reactiveValues(grid_read = NULL, 
                               sp_read = NULL, 
                               sp_download_db = NULL,
+                              sp_download_db_processed = NULL,
                               sp_without_outliers = NULL, 
                               results = NULL)
   
   status <- reactiveValues(species_status = FALSE,
-                           predictors_status = FALSE,
-                           species_value = "",
-                           predictors_value = "")
+                           predictors_status = FALSE
+                           # species_value = "",
+                           # predictors_value = ""
+                           )
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
@@ -48,7 +50,7 @@ function(input, output, session) {
                                       ensemble_model = NULL,
                                       execution_time = 0,
                                       can_run_algorithm = FALSE,
-                                      data_from_DB = NULL,
+                                      # data_from_DB = NULL,
                                       ensemble_map = NULL,
                                       data_bases = c("gbif", 
                                                      "ecoengine",
@@ -161,7 +163,7 @@ function(input, output, session) {
       variables$sp_read <- read.csv(sp$datapath, header = input$header,
                                     sep = input$sep, quote = input$quote)
       secondary_variables$original_sp_nrow <- nrow(variables$sp_read)
-      secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
+      secondary_variables$duplicated_sp <- variables$sp_read[duplicated(na.omit(variables$sp_read)), ]
       variables$sp_read <- unique(variables$sp_read)
       status$species_status <- TRUE
     }
@@ -530,11 +532,9 @@ function(input, output, session) {
           title = "Hey",
           easyClose = TRUE,
           footer = NULL,
-          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
-          br(),
-          "But you still can explore your data."
+          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware."
         ))
-        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
+        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware."))
       }
     }
   })
@@ -544,6 +544,15 @@ function(input, output, session) {
     content = function(fname){
       if (!is.null(input$file2) & !is.null(input$file1)) {
         write.csv(variables$results, fname)
+      }
+    }
+  )
+  
+  output$download_data_from_db_btn <- downloadHandler(
+    filename = function() { "downloaded_species_occ.csv" },
+    content = function(fname) {
+      if (!is.null(variables$sp_download_db)) {
+        write.csv(variables$sp_download_db, fname)
       }
     }
   )
@@ -853,10 +862,27 @@ function(input, output, session) {
     secondary_variables$duplicated_sp
   })
   
+  output$download_duplicated_sp <- downloadHandler(
+    filename = function(){"duplicated_records_species.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(secondary_variables$duplicated_sp, fname)
+      }
+    }
+  )
   
   output$duplicated_grid <- DT::renderDataTable({
     secondary_variables$duplicated_grid
   })
+  
+  output$download_duplicated_grid <- downloadHandler(
+    filename = function(){"duplicated_records_grid.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(secondary_variables$duplicated_grid, fname)
+      }
+    }
+  )
   
   output$show_predictors <- renderUI({
     selectInput("select_predictors", label = "",
@@ -897,15 +923,15 @@ function(input, output, session) {
   
   output$show_predict_map <- renderPlot({
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
-      variables$sp_read <- variables$sp_download_db[, 1:3]
-      colnames(variables$sp_read) <- c("sp", "long", "lat")
-      runAlgorithm(input$predictors_files, variables$sp_read)
+      presence_absence_data <- variables$sp_download_db[, 1:3]
+      colnames(presence_absence_data) <- c("sp", "long", "lat")
+      runAlgorithm(input$predictors_files, presence_absence_data)
       # title_predictive_map <- paste0(" ", input$select_input_algorithm)
       if (!is.null(predict_variables$ensemble_map)) {
         plot(predict_variables$ensemble_map)
       }
     }
-    predict_variables$can_run_algorithm <- FALSE
+    # predict_variables$can_run_algorithm <- FALSE
   })
   
   output$select_algorithm <- renderUI({
@@ -945,7 +971,7 @@ function(input, output, session) {
       paste0(round(duplicated_percent, 2), "%"),
       paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -957,7 +983,7 @@ function(input, output, session) {
       paste0(round(duplicated_percent, 2), "%"),
       paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read)),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -970,7 +996,7 @@ function(input, output, session) {
       paste0(round(outliers_percent, 2), "%"),
       paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -982,7 +1008,7 @@ function(input, output, session) {
       paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), ")"),
       paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), ")"),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -993,7 +1019,7 @@ function(input, output, session) {
       "Number of species", 
       paste0(number_of_species),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -1004,9 +1030,7 @@ function(input, output, session) {
                 selected = 1, multiple = TRUE)
   })
   
-  output$show_downloaded_data <- DT::renderDataTable({
-    variables$sp_download_db
-  })
+  
   
   output$info_evaluations <- DT::renderDataTable(({
     # if (!is.null(predict_variables$predictive_model)) {
@@ -1108,10 +1132,12 @@ function(input, output, session) {
   
   output$sp_download_na <- renderInfoBox({
     downloaded_species <- variables$sp_download_db
-    number_of_na <- abs(nrow(na.omit(downloaded_species)) - nrow(downloaded_species))
+    total_nrow <- nrow(downloaded_species)
+    number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
     infoBox(
       "Number of NA",
-      paste0(number_of_na),
+      paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
+      paste0(number_of_na, " of ", nrow(downloaded_species)),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1136,7 +1162,8 @@ function(input, output, session) {
     n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species), ])
     infoBox(
       "Duplicated",
-      paste0(n_duplicated_rows),
+      paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
+      paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1153,6 +1180,10 @@ function(input, output, session) {
       color = "light-blue", 
       fill = TRUE
     )
+  })
+  
+  output$show_downloaded_data <- DT::renderDataTable({
+    unique(na.omit(variables$sp_download_db))
   })
   
   
