@@ -347,7 +347,7 @@ body <- dashboardBody(
 
       fluidRow (
             box(
-              width = 4,
+              width = 6,
               collapsible = TRUE,
               title = "Algorithm", 
               status = "primary",

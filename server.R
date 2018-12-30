@@ -386,7 +386,9 @@ function(input, output, session) {
       # ================================================================================
       
       # === BIOMOD =====================================================================
-      
+      print(">>>>>>>>>>")
+      print(input$select_input_eval_method)
+      print(">>>>>>>>>>")
       myBiomodOption <- BIOMOD_ModelingOptions()
       myBiomodModelOut <- BIOMOD_Modeling(
         myBiomodData,
@@ -396,7 +398,8 @@ function(input, output, session) {
         DataSplit=as.numeric(input$training_set),
         Prevalence=0.5,
         VarImport=3, #length(stck@layers),
-        models.eval.meth = c('TSS','ROC'),
+        # models.eval.meth = c('TSS','ROC'),
+        models.eval.meth = input$select_input_eval_method,
         SaveObj = FALSE,
         rescal.all.models = TRUE,
         do.full.models = FALSE,
@@ -1047,6 +1050,7 @@ function(input, output, session) {
   }))
   
   output$info_eval_AUC <- DT::renderDataTable({
+    print(input$select_eval_method)
     if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
       models <- predict_variables$predictive_model
       ensemble_model <- predict_variables$ensemble_model
@@ -1055,12 +1059,13 @@ function(input, output, session) {
       evaluations <- get_evaluations(models)
       df_eval <- data.frame(evaluations)
       ini_col <- 1
-      df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
+      # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
+      df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
       rownames(df_eval_auc) <-c(models@models.computed[1])
       ini_col <- ini_col + 3
       for (i in 2:length(models@models.computed)) {
         ini_col <- ini_col + 1
-        df_eval_auc[models@models.computed[i], ] <- df_eval[2, ini_col:(ini_col+3)]
+        df_eval_auc[models@models.computed[i], ] <- df_eval['ROC', ini_col:(ini_col+3)]
         ini_col <- ini_col + 3
       }
       
@@ -1078,12 +1083,13 @@ function(input, output, session) {
       evaluations <- get_evaluations(models)
       df_eval <- data.frame(evaluations)
       ini_col <- 1
-      df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
+      # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
+      df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
       rownames(df_eval_tss) <-c(models@models.computed[1])
       ini_col <- ini_col + 3
       for (i in 2:length(models@models.computed)) {
         ini_col <- ini_col + 1
-        df_eval_tss[models@models.computed[i], ] <- df_eval[1, ini_col:(ini_col+3)]
+        df_eval_tss[models@models.computed[i], ] <- df_eval['TSS', ini_col:(ini_col+3)]
         ini_col <- ini_col + 3
       }
       
