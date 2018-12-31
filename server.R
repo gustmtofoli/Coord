@@ -312,8 +312,6 @@ function(input, output, session) {
         "This may take some time... coffee?"
       ))
       
-      
-      
       datafiles <- predictors
       
       stck = stack() 
@@ -417,8 +415,16 @@ function(input, output, session) {
       print("\n>>>>> MODELO")
       print(model_info)
       
+      BiomodModelsProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
+                                                    new.env = stck,
+                                                    proj.name = 'current',
+                                                    selected.models = 'all',
+                                                    binary.meth = 'TSS',
+                                                    compress = FALSE,
+                                                    build.clamping.mask = FALSE)
       
       
+      predict_variables$predictive_map <- BiomodModelsProjection
       
       # pa <- read.csv(occ_file$datapath, header = input$header,
       #                sep = input$sep, quote = input$quote)
@@ -468,9 +474,9 @@ function(input, output, session) {
       myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
                                              chosen.models = 'all',
                                              em.by = 'all',
-                                             eval.metric = c('TSS'),
+                                             eval.metric = input$select_input_eval_method_ensemble,
                                              eval.metric.quality.threshold = c(0.7),
-                                             models.eval.meth = c('TSS','ROC'),
+                                             models.eval.meth = input$select_input_eval_method,
                                              prob.mean = TRUE,
                                              prob.cv = FALSE,
                                              prob.ci = FALSE,
@@ -485,15 +491,18 @@ function(input, output, session) {
       print(get_evaluations(myBiomodEM))
       predict_variables$ensemble_model <- myBiomodEM
       
-      myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
-                                              new.env = stck,
-                                              proj.name = 'current',
-                                              selected.models = 'all',
-                                              binary.meth = 'TSS',
-                                              compress = FALSE,
-                                              build.clamping.mask = FALSE)
-
-      predict_variables$ensemble_map <- myBiomodProjection
+      # BiomodEnsembleProjection <- BIOMOD_Projection(modeling.output = myBiomodEM,
+      #                                         new.env = stck,
+      #                                         proj.name = 'current',
+      #                                         selected.models = 'all',
+      #                                         binary.meth = 'TSS',
+      #                                         compress = FALSE,
+      #                                         build.clamping.mask = FALSE)
+      
+      predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
+                                            EM.output = myBiomodEM)
+      
+      # predict_variables$ensemble_map <- BiomodEnsembleProjection
       
       
       
@@ -929,12 +938,17 @@ function(input, output, session) {
       presence_absence_data <- variables$sp_download_db[, 1:3]
       colnames(presence_absence_data) <- c("sp", "long", "lat")
       runAlgorithm(input$predictors_files, presence_absence_data)
-      # title_predictive_map <- paste0(" ", input$select_input_algorithm)
-      if (!is.null(predict_variables$ensemble_map)) {
-        plot(predict_variables$ensemble_map)
+      if (!is.null(predict_variables$predictive_map)) {
+        plot(predict_variables$predictive_map)
       }
     }
     # predict_variables$can_run_algorithm <- FALSE
+  })
+  
+  output$show_ensemble_map <- renderPlot({
+      if (!is.null(predict_variables$ensemble_map)) {
+        plot(predict_variables$ensemble_map)
+      }
   })
   
   output$select_algorithm <- renderUI({
@@ -945,6 +959,12 @@ function(input, output, session) {
   
   output$select_eval_method <- renderUI({
     selectInput("select_input_eval_method", label = "Choose evaluation method(s): ",
+                choices = c("ROC", "TSS", "KAPPA"),
+                selected = 1, multiple = TRUE)
+  })
+  
+  output$select_eval_method_ensemble <- renderUI({
+    selectInput("select_input_eval_method_ensemble", label = "Choose evaluation method(s): ",
                 choices = c("ROC", "TSS", "KAPPA"),
                 selected = 1, multiple = TRUE)
   })
@@ -1069,6 +1089,14 @@ function(input, output, session) {
         ini_col <- ini_col + 3
       }
       
+      if (!is.null(ensemble_model)) {
+        ini_col <- 1
+        for (j in 1:length(ensemble_model@em.computed)) {
+          df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
+          ini_col <- ini_col + 4
+        }
+      }
+      
       colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
       df_eval_auc
     }
@@ -1093,10 +1121,12 @@ function(input, output, session) {
         ini_col <- ini_col + 3
       }
       
-      ini_col <- 1
-      for (j in 1:length(ensemble_model@em.computed)) {
-        df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble[2, ini_col:(ini_col+3)]
-        ini_col <- ini_col + 4
+      if (!is.null(ensemble_model)) {
+        ini_col <- 1
+        for (j in 1:length(ensemble_model@em.computed)) {
+          df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]
+          ini_col <- ini_col + 4
+        }
       }
       
       colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
@@ -1191,7 +1221,6 @@ function(input, output, session) {
   output$show_downloaded_data <- DT::renderDataTable({
     unique(na.omit(variables$sp_download_db))
   })
-  
   
 }
 
