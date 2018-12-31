@@ -44,5 +44,5 @@ Sys.setenv(JAVA_HOME='/usr/lib/jvm/java-8-oracle/jre')
 install.packages('biomod2')
 install.packages('caretEnsemble')
 
-
+install.packages('shinyjs')
 install.packages("shinyWidgets")
