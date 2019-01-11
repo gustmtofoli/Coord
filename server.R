@@ -564,7 +564,7 @@ function(input, output, session) {
     filename = function() { "downloaded_species_occ.csv" },
     content = function(fname) {
       if (!is.null(variables$sp_download_db)) {
-        write.csv(variables$sp_download_db, fname)
+        write.csv(unique(na.omit(variables$sp_download_db)), fname)
       }
     }
   )
@@ -1194,8 +1194,8 @@ function(input, output, session) {
   
   output$sp_download_duplicated <- renderInfoBox({
     downloaded_species <- variables$sp_download_db
-    downloaded_species <- na.omit(downloaded_species)
-    n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species), ])
+    downloaded_species.na.omit <- na.omit(downloaded_species)
+    n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species.na.omit), ])
     infoBox(
       "Duplicated",
       paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),

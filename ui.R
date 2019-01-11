@@ -8,8 +8,8 @@ library(shinyWidgets)
 library(shinyjs)
 
 header <- dashboardHeader(
-  title = "Coord",
-  titleWidth = 187
+  title = "COORD (testing)",
+  titleWidth = 200
 )
 
 
