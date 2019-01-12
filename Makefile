@@ -25,3 +25,7 @@ install-dependencies-ubuntu-18.04:
 	sudo apt-get install libgdal-dev
 	sudo apt-get install libssl-dev
 
+install-r-ubuntu-18.04:
+	sudo apt-get install r-base r-base-dev
+	sudo apt-get install libgdal-dev libproj-dev
+
