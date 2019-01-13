@@ -738,7 +738,7 @@ function(input, output, session) {
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_read <- variables$sp_read
       species_name <- unique(sp_read$sp)
-      selectInput("selec_filter_sp_map", label = h4("Select specie"),
+      selectInput("selec_filter_sp_map", label = h4("Select species"),
                   choices = species_name,
                   selected = 1, multiple = TRUE)
     }
@@ -747,7 +747,7 @@ function(input, output, session) {
   select_all_filter <- observeEvent(input$select_all_filter_btn, {
     sp_read <- variables$sp_read
     species_name = unique(sp_read$sp)
-    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select species"), 
                       choices = species_name, 
                       selected = species_name)
   })
@@ -755,7 +755,7 @@ function(input, output, session) {
   clean_all_filter <- observeEvent(input$clean_all_filter_btn, {
     sp_download_db <- variables$sp_download_db
     species_name = unique(sp_download_db$sp)
-    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select species"), 
                       choices = species_name, 
                       selected = 1)
   })
@@ -766,7 +766,7 @@ function(input, output, session) {
       uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
                                  sep = ",")
       species_name = unique(uploaded_data$sp)
-      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select specie"), 
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
                         choices = species_name, 
                         selected = species_name)
     }
@@ -778,7 +778,7 @@ function(input, output, session) {
       uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
                                 sep = ",")
       species_name = unique(uploaded_data$sp)
-      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select specie"), 
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
                         choices = species_name, 
                         selected = 1)
     }
@@ -990,9 +990,9 @@ function(input, output, session) {
   output$sp_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_sp) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Duplicated", 
+      "Sp - Duplicated ocurrences", 
       paste0(round(duplicated_percent, 2), "%"),
-      paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow),
+      paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow, " occ."),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1002,9 +1002,9 @@ function(input, output, session) {
   output$grid_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_grid) / nrow(variables$grid_read))*100
     infoBox(
-      "Grid - Duplicated", 
+      "Grid - Duplicated occurences", 
       paste0(round(duplicated_percent, 2), "%"),
-      paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read)),
+      paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read), " occ."),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1017,7 +1017,7 @@ function(input, output, session) {
     infoBox(
       "Sp - Outliers", 
       paste0(round(outliers_percent, 2), "%"),
-      paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow),
+      paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow, " occ."),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1027,9 +1027,9 @@ function(input, output, session) {
   output$sp_total_percent <- renderInfoBox({
     total_percent <- (nrow(variables$sp_read) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Total", 
-      paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), ")"),
-      paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), ")"),
+      "Used occurrences",
+      paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), " occ.)"),
+      paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), " occ.)"),
       icon = icon("list"),
       color = "light-blue", 
       fill = TRUE
@@ -1160,7 +1160,7 @@ function(input, output, session) {
       species_download <- grid_read <- read.csv(file_species_download$datapath, header = input$header,
                                       sep = input$sep, quote = input$quote)
       species_name <- unique(species_download$sp)
-      selectInput("selec_filter_download_sp", label = h5("Select specie"),
+      selectInput("selec_filter_download_sp", label = h5("Select species"),
                   choices = species_name,
                   selected = 1, multiple = TRUE)
     }
@@ -1171,7 +1171,7 @@ function(input, output, session) {
     total_nrow <- nrow(downloaded_species)
     number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
     infoBox(
-      "Number of NA",
+      "Number of empty records",
       paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
       paste0(number_of_na, " of ", nrow(downloaded_species)),
       icon = icon("list"),
@@ -1197,7 +1197,7 @@ function(input, output, session) {
     downloaded_species.na.omit <- na.omit(downloaded_species)
     n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species.na.omit), ])
     infoBox(
-      "Duplicated",
+      "Duplicated occurences",
       paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
       paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
       icon = icon("list"),
