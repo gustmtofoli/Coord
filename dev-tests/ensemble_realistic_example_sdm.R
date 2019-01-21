@@ -29,7 +29,10 @@ for(i in 1:NROW(datafiles)){
 # download das ocorrencias da espécie utilizando o GBIF ===========================
 library(spocc)
 spp = c("Buceros rhinoceros")
-buceros_rhinoceros = occ(spp, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
+buceros_rhinoceros = occ(spp, from = c('gbif'))
+df <-occ2df(buceros_rhinoceros)
+df[df$prov == 'bison', ]
+nrow(df)
 head(buceros_rhinoceros)
 data = occ2df(buceros_rhinoceros)
 # apenas lat e long
@@ -84,34 +87,44 @@ sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
 
 
 # gerando sdmData =================================================================
+plot(sdmData_shapefile)
 d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
 d
+plot(d)
 # =================================================================================
 
 
 # modelo  =========================================================================
 m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars','svm'), replicatin='sub', 
-         test.percent = 25, n = 2)
-m
-getModelInfo(m)
+         test.percent = 25, n = 1)
+
+evaluations <- getEvaluation(m)
+evaluations
+
+slot(models$pb, "statistics")
+
+model_info <- getModelInfo(m)
+model_info
+
 roc(m)
 roc(m,smooth=T)
 # =================================================================================
 
 
 # predict =========================================================================
-p1 <- predict(m, newdata = stck, filename = 'p1.img') 
+p1 <- predict(m, newdata = stck, filename = 'p1.img', overwrite = TRUE) 
 plot(p1)
 nlayers(p1)
 plot(p1[[1:2]])
 
 # média
-p1m <- predict(m, newdata = stck, filename = 'p2m.img', mean=T)
+p1m <- predict(m, newdata = stck, filename = 'p2m.img', mean=T, overwrite = TRUE)
 plot(p1m)
 # =================================================================================
 
 
 # ensemble ========================================================================
+
 e1 <- ensemble(m, newdata = stck, filename = 'e1.img', 
                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE) 
 

@@ -42,10 +42,16 @@ install.packages('gbm')
 # install.packages('rJava')
 # Sys.setenv(JAVA_HOME='/usr/lib/jvm/java-8-oracle/jre')
 
-# install.packages('sdm')
-# install.packages('SSDM')
+install.packages('sdm')
+install.packages('SSDM')
+
+install.packages('spocc')
+install.packages('devtools')
 install.packages('biomod2')
 install.packages('caret')
 install.packages('spocc')
 
 install.packages('caretEnsemble')
+
+install.packages('shinyjs')
+install.packages("shinyWidgets")

@@ -11,13 +11,28 @@ library(pROC)
 library(shinycssloaders)
 library(highcharter)
 library(spocc)
+library(maptools)
+library(rgdal)
+library(sp)
+library(caret)
+# library(sdm)
+library(dismo)
+library(biomod2)
 
 function(input, output, session) {
 
   variables <- reactiveValues(grid_read = NULL, 
                               sp_read = NULL, 
+                              sp_download_db = NULL,
+                              sp_download_db_processed = NULL,
                               sp_without_outliers = NULL, 
                               results = NULL)
+  
+  status <- reactiveValues(species_status = FALSE,
+                           predictors_status = FALSE
+                           # species_value = "",
+                           # predictors_value = ""
+                           )
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
@@ -31,30 +46,88 @@ function(input, output, session) {
                                       roc = NULL,
                                       auc = NULL,
                                       predictive_map = NULL,
+                                      predictive_model = NULL,
+                                      ensemble_model = NULL,
                                       execution_time = 0,
                                       can_run_algorithm = FALSE,
-                                      data_from_DB = NULL)
+                                      # data_from_DB = NULL,
+                                      ensemble_map = NULL,
+                                      data_bases = c("gbif", 
+                                                     "ecoengine",
+                                                     "bison",
+                                                     "inat",
+                                                     "ebird",
+                                                     "antweb",
+                                                     "vertnet",
+                                                     "idigbio",
+                                                     "obis",
+                                                     "ala"))
   
-  predict_variables$algorithms <- data.frame(name = c("SVM - Support Vector Machine", 
-                                                      "Random Forest",
+  predict_variables$algorithms <- data.frame(name = c("GAM - Generalized Linear Model", 
+                                                      "RF - Random Forest",
                                                       "GLM - Logistic Regression",
                                                       "GBM - Gradient Boosting Machine",
-                                                      "KNN - k-nearest neighbors"), 
-                                             method = c("svmRadial", 
-                                                        "rf",
-                                                        "glm",
-                                                        "gbm",
-                                                        "knn") 
+                                                      "CTA - Classification Tree Analysis",
+                                                      "ANN - Artificial Neural Network",
+                                                      "BIOCLIM - Surface Range Envelop (SRE)",
+                                                      "FDA - Flexible Discriminant Analysis",
+                                                      "MARS - Multiple Adaptive Regression Splines "),
+                                                       
+                                             method = c("GAM", 
+                                                        "RF",
+                                                        "GLM",
+                                                        "GBM",
+                                                        "CTA",
+                                                        "ANN",
+                                                        "SRE",
+                                                        "FDA",
+                                                        "MARS")
+                                                        
                                              )
   
   observeEvent(input$run_algorithm_btn, {
     predict_variables$can_run_algorithm <- TRUE
   })
   
+  
+  
   observeEvent(input$download_from_DB, {
-      data_from_DB <- occ(input$sp_name, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
-      predict_variables$data_from_DB <- occ2df(data_from_DB)
-      print(predict_variables$data_from_DB)
+    showModal(modalDialog(
+      title = "Hmmm...",
+      footer = NULL,
+      easyClose = FALSE,
+      "Searching Data..."
+    ))
+    species_download <- c()
+    
+    if (input$upload_file_switch_btn) {
+      species_download <- input$selec_filter_download_sp
+    }
+    else {
+      species_download <- input$sp_name
+    }
+    
+    data_from_DB <- occ(species_download, from = input$select_data_bases)
+    df_data <- occ2df(data_from_DB)
+    colnames(df_data) <- c("sp", "lon", "lat", "data_base")
+    print(df_data)
+    if (!is.null(df_data) & nrow(df_data) > 0) {
+      variables$sp_download_db <- df_data[, 1:4]
+      status$species_status <- TRUE
+      showModal(modalDialog(
+        title = "Nice work!!",
+        footer = NULL,
+        easyClose = TRUE
+      ))
+    }
+    else {
+      showModal(modalDialog(
+        title = "Oh no :(",
+        footer = NULL,
+        easyClose = TRUE,
+        paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
+      ))
+    }
   })
   
   observeEvent(input$select_input_algorithm, {
@@ -63,6 +136,7 @@ function(input, output, session) {
   
   observeEvent(input$predictors_files, {
     predict_variables$can_run_algorithm <- FALSE
+    status$predictors_status <- TRUE
   })
   
   observeEvent(input$occ_file, {
@@ -89,8 +163,9 @@ function(input, output, session) {
       variables$sp_read <- read.csv(sp$datapath, header = input$header,
                                     sep = input$sep, quote = input$quote)
       secondary_variables$original_sp_nrow <- nrow(variables$sp_read)
-      secondary_variables$duplicated_sp <- variables$sp_read[duplicated(variables$sp_read), ]
+      secondary_variables$duplicated_sp <- variables$sp_read[duplicated(na.omit(variables$sp_read)), ]
       variables$sp_read <- unique(variables$sp_read)
+      status$species_status <- TRUE
     }
   })
   
@@ -233,51 +308,12 @@ function(input, output, session) {
       showModal(modalDialog(
         title = "Hey",
         footer = NULL,
-        easyClose = TRUE,
+        easyClose = FALSE,
         "This may take some time... coffee?"
       ))
       
       datafiles <- predictors
       
-      occ_file <- pres_abs
-      
-      pa <- read.csv(occ_file$datapath, header = input$header,
-                     sep = input$sep, quote = input$quote)
-      n <- runif(1, min=1, max=999999);
-      set.seed(n) #pseudo-repeatability
-      # trainIndex = createDataPartition(pa$pb, p = .75, 
-      #                                  list = FALSE,
-      #                                  times = 1) 
-      
-      trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
-                                       list = FALSE,
-                                       times = 1) 
-      
-      training = pa[ trainIndex,] #75% data for model training
-      predict_variables$training <- training
-      testing= pa[-trainIndex,] #25% for model testing
-      predict_variables$testing <- testing
-      train_control = trainControl(method="cv", number=10)
-      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-      
-      if (algorithm_selected == "glm") {
-        mod_fit1 = train(pb~.,
-                         data=training, trControl=train_control, method=algorithm_selected, family="binomial")
-      }
-      
-      if (algorithm_selected == "gbm") {
-        mod_fit1 = train(pb~.,
-                         data=training, trControl=train_control, method=algorithm_selected)
-      }
-      else {
-        mod_fit1 = train(pb~.,
-                       data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
-      }
-      p1=predict(mod_fit1, newdata=testing) 
-      roc = pROC::roc(testing[,"pb"], p1) #compare testing data
-      predict_variables$roc <- roc
-      auc= pROC::auc(roc)
-      predict_variables$auc <- auc
       stck = stack() 
       names_stack <- c()
       for(i in 1:NROW(datafiles)){
@@ -286,8 +322,192 @@ function(input, output, session) {
         stck = stack(stck,tempraster)
       }
       names(stck) <- names_stack
-      p1 = predict(stck, mod_fit1)
-      predict_variables$predictive_map <- p1
+      # print(stck)
+      
+      data <- pres_abs
+      
+      data <- data[, 2:3]
+      # print(data)
+      
+      
+     
+      prs1 = extract(stck, data)
+      prs1_df <- data.frame(prs1)
+      prs1_df$long <- data$long
+      prs1_df$lat <- data$lat
+      # print(prs1)
+      
+      n <- runif(1, min=1, max=999999);
+      set.seed(n)
+      backgr = randomPoints(stck, nrow(data)) 
+      absvals = extract(stck, backgr) 
+      absvals_df <- data.frame(absvals)
+      absvals_df$long <- backgr[, 'x']
+      absvals_df$lat <- backgr[, 'y']
+      pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
+      # print(pb)
+      sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
+      # head(sdmdata)
+      sdmdata=na.omit(sdmdata)
+      # summary(sdmdata)
+      
+      # === SDM ===========================================================
+      # WGScoor2 <- sdmdata
+      # coordinates(WGScoor2)=~long+lat
+      # proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
+      # sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+      # 
+      # d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
+      # ===================================================================
+      
+      # === BIOMOD =========================================================
+      spName <- input$sp_name
+      myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata$pb,
+                                           expl.var = stck,
+                                           resp.xy = sdmdata[, c('long', 'lat')],
+                                           resp.name = spName)
+      
+      # ======================================================================
+      
+      
+      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
+      
+      algorithm <- c()
+      for (algo in algorithm_selected) {
+        algorithm <- c(algorithm, algo)
+      }
+      
+      
+      # === SDM ========================================================================
+      # m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
+      #          test.percent = (100 - as.numeric(input$training_set)), n = as.numeric(input$number_of_executions))
+      # ================================================================================
+      
+      # === BIOMOD =====================================================================
+      print(">>>>>>>>>>")
+      print(input$select_input_eval_method)
+      print(">>>>>>>>>>")
+      myBiomodOption <- BIOMOD_ModelingOptions()
+      myBiomodModelOut <- BIOMOD_Modeling(
+        myBiomodData,
+        models = algorithm,
+        models.options = myBiomodOption,
+        NbRunEval=as.numeric(input$number_of_executions),
+        DataSplit=as.numeric(input$training_set),
+        Prevalence=0.5,
+        VarImport=3, #length(stck@layers),
+        # models.eval.meth = c('TSS','ROC'),
+        models.eval.meth = input$select_input_eval_method,
+        SaveObj = FALSE,
+        rescal.all.models = TRUE,
+        do.full.models = FALSE,
+        modeling.id = paste("só pra passar","FirstModeling",sep=""))
+      
+      # ================================================================================
+      
+      predict_variables$predictive_model <- myBiomodModelOut
+      
+      print(">>> model:")
+      print(predict_variables$predictive_model)
+      print(">>> model info:")
+      # model_info <- getModelInfo(m)
+      model_info <- get_evaluations(myBiomodModelOut)
+      print("\n>>>>> MODELO")
+      print(model_info)
+      
+      BiomodModelsProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
+                                                    new.env = stck,
+                                                    proj.name = 'current',
+                                                    selected.models = 'all',
+                                                    binary.meth = 'TSS',
+                                                    compress = FALSE,
+                                                    build.clamping.mask = FALSE)
+      
+      
+      predict_variables$predictive_map <- BiomodModelsProjection
+      
+      # pa <- read.csv(occ_file$datapath, header = input$header,
+      #                sep = input$sep, quote = input$quote)
+      # n <- runif(1, min=1, max=999999);
+      # set.seed(n)
+      # 
+      # trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
+      #                                  list = FALSE,
+      #                                  times = 1) 
+      # 
+      # training = pa[ trainIndex,]
+      # predict_variables$training <- training
+      # testing= pa[-trainIndex,]
+      # predict_variables$testing <- testing
+      # train_control = trainControl(method="cv", number=10)
+      # algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
+      # 
+      # if (algorithm_selected == "glm") {
+      #   mod_fit1 = train(pb~.,
+      #                    data=training, trControl=train_control, method=algorithm_selected, family="binomial")
+      # }
+      # 
+      # if (algorithm_selected == "gbm") {
+      #   mod_fit1 = train(pb~.,
+      #                    data=training, trControl=train_control, method=algorithm_selected)
+      # }
+      # else {
+      #   mod_fit1 = train(pb~.,
+      #                  data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
+      # }
+      
+      
+      
+      
+      # p1=predict(mod_fit1, newdata=testing) 
+      # roc = pROC::roc(testing[,"pb"], p1)
+      # predict_variables$roc <- roc
+      # auc= pROC::auc(roc)
+      # predict_variables$auc <- roc(m)
+      
+      #   SDM ==========================================================================
+      # e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
+      #                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
+      
+      # ===============================================================================
+      
+      myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
+                                             chosen.models = 'all',
+                                             em.by = 'all',
+                                             eval.metric = input$select_input_eval_method_ensemble,
+                                             eval.metric.quality.threshold = c(0.7),
+                                             models.eval.meth = input$select_input_eval_method,
+                                             prob.mean = TRUE,
+                                             prob.cv = FALSE,
+                                             prob.ci = FALSE,
+                                             prob.ci.alpha = 0.05,
+                                             prob.median = FALSE,
+                                             committee.averaging = FALSE,
+                                             prob.mean.weight = TRUE,
+                                             prob.mean.weight.decay = 'proportional' )   
+      
+      # myBiomodEM
+      print("\n>>>>>>ENSEMBLE")
+      print(get_evaluations(myBiomodEM))
+      predict_variables$ensemble_model <- myBiomodEM
+      
+      # BiomodEnsembleProjection <- BIOMOD_Projection(modeling.output = myBiomodEM,
+      #                                         new.env = stck,
+      #                                         proj.name = 'current',
+      #                                         selected.models = 'all',
+      #                                         binary.meth = 'TSS',
+      #                                         compress = FALSE,
+      #                                         build.clamping.mask = FALSE)
+      
+      predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
+                                            EM.output = myBiomodEM)
+      
+      # predict_variables$ensemble_map <- BiomodEnsembleProjection
+      
+      
+      
+      # p1 = predict(stck, mod_fit1)
+      # predict_variables$predictive_map <- p1
       end_time <- Sys.time()
       predict_variables$execution_time = round((end_time - start_time), 2)
       
@@ -324,11 +544,9 @@ function(input, output, session) {
           title = "Hey",
           easyClose = TRUE,
           footer = NULL,
-          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware.",
-          br(),
-          "But you still can explore your data."
+          "There are too many rows in those data. It would take a lot of time to generate the results with the current hardware."
         ))
-        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware. But you still can explore your data."))
+        data.frame(Message = c("There are too many rows in those data. It would take a lot of time to generate the results with the current hardware."))
       }
     }
   })
@@ -338,6 +556,15 @@ function(input, output, session) {
     content = function(fname){
       if (!is.null(input$file2) & !is.null(input$file1)) {
         write.csv(variables$results, fname)
+      }
+    }
+  )
+  
+  output$download_data_from_db_btn <- downloadHandler(
+    filename = function() { "downloaded_species_occ.csv" },
+    content = function(fname) {
+      if (!is.null(variables$sp_download_db)) {
+        write.csv(unique(na.omit(variables$sp_download_db)), fname)
       }
     }
   )
@@ -511,7 +738,7 @@ function(input, output, session) {
     if (!is.null(input$file2) & !is.null(input$file1)) {
       sp_read <- variables$sp_read
       species_name <- unique(sp_read$sp)
-      selectInput("selec_filter_sp_map", label = h4("Select specie"),
+      selectInput("selec_filter_sp_map", label = h4("Select species"),
                   choices = species_name,
                   selected = 1, multiple = TRUE)
     }
@@ -520,17 +747,41 @@ function(input, output, session) {
   select_all_filter <- observeEvent(input$select_all_filter_btn, {
     sp_read <- variables$sp_read
     species_name = unique(sp_read$sp)
-    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select species"), 
                       choices = species_name, 
                       selected = species_name)
   })
   
   clean_all_filter <- observeEvent(input$clean_all_filter_btn, {
-    sp_read <- variables$sp_read
-    species_name = unique(sp_read$sp)
-    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select specie"), 
+    sp_download_db <- variables$sp_download_db
+    species_name = unique(sp_download_db$sp)
+    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select species"), 
                       choices = species_name, 
                       selected = 1)
+  })
+  
+  observeEvent(input$selet_all_download_sp_btn, {
+    if (!is.null(input$file_species_download)) {
+      uploaded_file <- input$file_species_download
+      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
+                                 sep = ",")
+      species_name = unique(uploaded_data$sp)
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
+                        choices = species_name, 
+                        selected = species_name)
+    }
+  })
+  
+  observeEvent(input$clean_download_sp_btn, {
+    if (!is.null(input$file_species_download)) {
+      uploaded_file <- input$file_species_download
+      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
+                                sep = ",")
+      species_name = unique(uploaded_data$sp)
+      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
+                        choices = species_name, 
+                        selected = 1)
+    }
   })
   
   output$sp_occ_scatter_plot <- renderPlotly({
@@ -623,10 +874,27 @@ function(input, output, session) {
     secondary_variables$duplicated_sp
   })
   
+  output$download_duplicated_sp <- downloadHandler(
+    filename = function(){"duplicated_records_species.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(secondary_variables$duplicated_sp, fname)
+      }
+    }
+  )
   
   output$duplicated_grid <- DT::renderDataTable({
     secondary_variables$duplicated_grid
   })
+  
+  output$download_duplicated_grid <- downloadHandler(
+    filename = function(){"duplicated_records_grid.csv"},
+    content = function(fname){
+      if (!is.null(input$file2) & !is.null(input$file1)) {
+        write.csv(secondary_variables$duplicated_grid, fname)
+      }
+    }
+  )
   
   output$show_predictors <- renderUI({
     selectInput("select_predictors", label = "",
@@ -655,38 +923,66 @@ function(input, output, session) {
   })
 
   output$show_auc_curve <- renderPlot({
-    if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
-      plot(predict_variables$roc)
-      text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+    # if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
+    #   plot(predict_variables$roc)
+    #   text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+    # }
+    if (!is.null(predict_variables$roc)) {
+      predict_variables$roc
+      # text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
     }
   })
   
   output$show_predict_map <- renderPlot({
-    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
-      runAlgorithm(input$predictors_files, input$occ_file)
-      title_predictive_map <- paste0("Predictive Map - ", input$select_input_algorithm)
-      plot(predict_variables$predictive_map, main = title_predictive_map)
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
+      presence_absence_data <- variables$sp_download_db[, 1:3]
+      colnames(presence_absence_data) <- c("sp", "long", "lat")
+      runAlgorithm(input$predictors_files, presence_absence_data)
+      if (!is.null(predict_variables$predictive_map)) {
+        plot(predict_variables$predictive_map)
+      }
     }
+    # predict_variables$can_run_algorithm <- FALSE
+  })
+  
+  output$show_ensemble_map <- renderPlot({
+      if (!is.null(predict_variables$ensemble_map)) {
+        plot(predict_variables$ensemble_map)
+      }
   })
   
   output$select_algorithm <- renderUI({
-    selectInput("select_input_algorithm", label = "Choose Algorithm",
+    selectInput("select_input_algorithm", label = "Choose Algorithms: ",
                 choices = predict_variables$algorithms,
                 selected = 1, multiple = TRUE)
   })
   
+  output$select_eval_method <- renderUI({
+    selectInput("select_input_eval_method", label = "Choose evaluation method(s): ",
+                choices = c("ROC", "TSS", "KAPPA"),
+                selected = 1, multiple = TRUE)
+  })
+  
+  output$select_eval_method_ensemble <- renderUI({
+    selectInput("select_input_eval_method_ensemble", label = "Choose evaluation method(s): ",
+                choices = c("ROC", "TSS", "KAPPA"),
+                selected = 1, multiple = TRUE)
+  })
+  
   output$info_training_testing <- DT::renderDataTable({
-    if (!is.null(input$predictors_files) & !is.null(input$occ_file) & predict_variables$can_run_algorithm) {
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
       df_info <- data.frame(info = c('Execution time: ', 
-                                     'Algorithm: ', 
+                                     # 'Algorithm: ', 
                                      'Training set: ', 
-                                     'Test set: ',
-                                     'AUC: '), 
+                                     'Test set: '
+                                     # 'AUC: '
+                                     ), 
                             value = c(as.character(predict_variables$execution_time), 
-                                      input$select_input_algorithm, 
+                                      # input$select_input_algorithm, 
                                       paste0(input$training_set, "%"), 
-                                      paste0(100 - as.numeric(input$training_set), "%"),
-                                      as.character(round(predict_variables$auc, 5))))
+                                      paste0(100 - as.numeric(input$training_set), "%")
+                                      # as.character(round(predict_variables$auc, 5))
+                                      ))
       df_info
     }
   })
@@ -694,11 +990,11 @@ function(input, output, session) {
   output$sp_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_sp) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Duplicated", 
+      "Sp - Duplicated ocurrences", 
       paste0(round(duplicated_percent, 2), "%"),
-      paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow),
+      paste0(nrow(secondary_variables$duplicated_sp), " of ", secondary_variables$original_sp_nrow, " occ."),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -706,11 +1002,11 @@ function(input, output, session) {
   output$grid_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_grid) / nrow(variables$grid_read))*100
     infoBox(
-      "Grid - Duplicated", 
+      "Grid - Duplicated occurences", 
       paste0(round(duplicated_percent, 2), "%"),
-      paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read)),
+      paste0(nrow(secondary_variables$duplicated_grid), " of ", nrow(variables$grid_read), " occ."),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -721,9 +1017,9 @@ function(input, output, session) {
     infoBox(
       "Sp - Outliers", 
       paste0(round(outliers_percent, 2), "%"),
-      paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow),
+      paste0(nrow(outliers), " of ", secondary_variables$original_sp_nrow, " occ."),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -731,11 +1027,11 @@ function(input, output, session) {
   output$sp_total_percent <- renderInfoBox({
     total_percent <- (nrow(variables$sp_read) / secondary_variables$original_sp_nrow)*100
     infoBox(
-      "Sp - Total", 
-      paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), ")"),
-      paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), ")"),
+      "Used occurrences",
+      paste0("Used: ", round(total_percent, 2), "%", " (",nrow(variables$sp_read), " occ.)"),
+      paste0("Removed: ", 100 - round(total_percent, 2), "%", " (", secondary_variables$original_sp_nrow - nrow(variables$sp_read), " occ.)"),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
@@ -746,18 +1042,185 @@ function(input, output, session) {
       "Number of species", 
       paste0(number_of_species),
       icon = icon("list"),
-      color = "green", 
+      color = "light-blue", 
       fill = TRUE
     )
   })
   
   output$select_DB <- renderUI({
-    selectInput("selec_DB", label = "Select Data base: ",
-                choices = c('GBIF', 'SpeciesLink'),
+    selectInput("select_data_bases", label = "Select Data base: ",
+                choices = predict_variables$data_bases,
                 selected = 1, multiple = TRUE)
   })
   
   
+  
+  output$info_evaluations <- DT::renderDataTable(({
+    # if (!is.null(predict_variables$predictive_model)) {
+    #   evaluations <- get_evaluations(predict_variables$predictive_model)
+    #   df_evaluations <- data.frame(evaluations)
+    #   # df_evaluations[1, ]
+    #   df_eval_model1 <- data.frame(testing_data = df_eval[, 1],
+    #                                cutoff = df_eval[, 2],
+    #                                sensitivity = df_eval[, 3],
+    #                                specificity = df_eval[, 4])
+    #   # # colnames(df_evaluations) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+    #   df_eval_model1
+    # }
+  }))
+  
+  output$info_eval_AUC <- DT::renderDataTable({
+    print(input$select_eval_method)
+    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
+      models <- predict_variables$predictive_model
+      ensemble_model <- predict_variables$ensemble_model
+      ensemble_evaluations <- get_evaluations(ensemble_model)
+      df_eval_ensemble <- data.frame(ensemble_evaluations)
+      evaluations <- get_evaluations(models)
+      df_eval <- data.frame(evaluations)
+      ini_col <- 1
+      # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
+      df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
+      rownames(df_eval_auc) <-c(models@models.computed[1])
+      ini_col <- ini_col + 3
+      for (i in 2:length(models@models.computed)) {
+        ini_col <- ini_col + 1
+        df_eval_auc[models@models.computed[i], ] <- df_eval['ROC', ini_col:(ini_col+3)]
+        ini_col <- ini_col + 3
+      }
+      
+      if (!is.null(ensemble_model)) {
+        ini_col <- 1
+        for (j in 1:length(ensemble_model@em.computed)) {
+          df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
+          ini_col <- ini_col + 4
+        }
+      }
+      
+      colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+      df_eval_auc
+    }
+  })
+  
+  output$info_eval_TSS <- DT::renderDataTable({
+    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
+      ensemble_model <- predict_variables$ensemble_model
+      ensemble_evaluations <- get_evaluations(ensemble_model)
+      df_eval_ensemble <- data.frame(ensemble_evaluations)
+      models <- predict_variables$predictive_model
+      evaluations <- get_evaluations(models)
+      df_eval <- data.frame(evaluations)
+      ini_col <- 1
+      # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
+      df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
+      rownames(df_eval_tss) <-c(models@models.computed[1])
+      ini_col <- ini_col + 3
+      for (i in 2:length(models@models.computed)) {
+        ini_col <- ini_col + 1
+        df_eval_tss[models@models.computed[i], ] <- df_eval['TSS', ini_col:(ini_col+3)]
+        ini_col <- ini_col + 3
+      }
+      
+      if (!is.null(ensemble_model)) {
+        ini_col <- 1
+        for (j in 1:length(ensemble_model@em.computed)) {
+          df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]
+          ini_col <- ini_col + 4
+        }
+      }
+      
+      colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+      df_eval_tss
+    }
+  })
+  
+  output$species_infobox <- renderInfoBox({
+    infoBox(
+      "Species", 
+      ifelse(status$species_status, "Loaded", "Not loaded"),
+      icon = icon("list"),
+      color = ifelse(status$species_status, "green", "red"), 
+      fill = TRUE
+    )
+  })
+  
+  output$predictors_infobox <- renderInfoBox({
+    infoBox(
+      "Predictors", 
+      ifelse(status$predictors_status, "Loaded", "Not loaded"),
+      icon = icon("list"),
+      color = ifelse(status$predictors_status, "green", "red"), 
+      fill = TRUE
+    )
+  })
+  
+  output$filter_sp_download <- renderUI({
+    if (!is.null(input$file_species_download)) {
+      file_species_download <- input$file_species_download
+      species_download <- grid_read <- read.csv(file_species_download$datapath, header = input$header,
+                                      sep = input$sep, quote = input$quote)
+      species_name <- unique(species_download$sp)
+      selectInput("selec_filter_download_sp", label = h5("Select species"),
+                  choices = species_name,
+                  selected = 1, multiple = TRUE)
+    }
+  })
+  
+  output$sp_download_na <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    total_nrow <- nrow(downloaded_species)
+    number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
+    infoBox(
+      "Number of empty records",
+      paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
+      paste0(number_of_na, " of ", nrow(downloaded_species)),
+      icon = icon("list"),
+      color = "light-blue", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_count <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    number_of_species <- length(unique(downloaded_species$sp))
+    infoBox(
+      "Number of Species",
+      paste0(number_of_species),
+      icon = icon("list"),
+      color = "light-blue", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_duplicated <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    downloaded_species.na.omit <- na.omit(downloaded_species)
+    n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species.na.omit), ])
+    infoBox(
+      "Duplicated occurences",
+      paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
+      paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
+      icon = icon("list"),
+      color = "light-blue", 
+      fill = TRUE
+    )
+  })
+  
+  output$sp_download_db <- renderInfoBox({
+    downloaded_species <- variables$sp_download_db
+    n_data_bases <- length(unique(downloaded_species$data_base))
+    infoBox(
+      "Data Bases with records",
+      paste0(n_data_bases),
+      icon = icon("list"),
+      color = "light-blue", 
+      fill = TRUE
+    )
+  })
+  
+  output$show_downloaded_data <- DT::renderDataTable({
+    unique(na.omit(variables$sp_download_db))
+  })
   
 }
 

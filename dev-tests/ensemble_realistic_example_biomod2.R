@@ -50,9 +50,9 @@ prs1_df$lat <- data$latitude
 set.seed(1)
 backgr = randomPoints(stck, 500) #500 random points
 absvals = extract(stck, backgr) #choose absence values from the background
-absvals_df <- data.frame()
-# absvals_df$long <- backgr[, 'x']
-# absvals_df$lat <- backgr[, 'y']
+absvals_df <- data.frame(absvals)
+absvals_df$long <- backgr[, 'x']
+absvals_df$lat <- backgr[, 'y']
 pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
 sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
 head(sdmdata)
@@ -76,13 +76,13 @@ plot(myBiomodData)
 myBiomodOption <- BIOMOD_ModelingOptions()
 # =================================================================================
 
-
+nlayers(stck)
 # models ==========================================================================
 myBiomodModelOut <- BIOMOD_Modeling(
   myBiomodData,
-  models = c('SRE','CTA','RF','MARS','FDA'),
+  models = c('GBM','RF'),
   models.options = myBiomodOption,
-  NbRunEval=3,
+  NbRunEval=1,
   DataSplit=80,
   Prevalence=0.5,
   VarImport=3, #length(stck@layers),
@@ -90,79 +90,57 @@ myBiomodModelOut <- BIOMOD_Modeling(
   SaveObj = TRUE,
   rescal.all.models = TRUE,
   do.full.models = FALSE,
-  modeling.id = paste(myRespName,"FirstModeling",sep=""))
+  modeling.id = "dsadsa")
 
 myBiomodModelOut
+myBiomodModelOut@models.computed[1]
+evaluations <- get_evaluations(myBiomodModelOut)
+colnames(evaluations)
+evaluations
+df_eval <- data.frame(evaluations)
+df_eval
+nrow(df_eval)
+df_eval[1, ]
+
+new <- data.frame(df_eval[1, 1:4])
+rownames(new) <-c('GBM')
+new['RF', ] <- df_eval[1, 5:8]
+new
+
+
+
 # =================================================================================
 
-# separando conjuntos de treino e teste ===========================================
-# trainIndex = createDataPartition(sdmdata$pb, p = .75, list = FALSE) 
-# training = sdmdata[ trainIndex,] 
-# testing= sdmdata[-trainIndex,] 
-# =================================================================================
+# 4. Doing Ensemble Modelling
+myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
+                                       chosen.models = 'all',
+                                       em.by = 'all',
+                                       eval.metric = c("ROC", "TSS"),
+                                       eval.metric.quality.threshold = NULL,
+                                       models.eval.meth = c('TSS','ROC'),
+                                       prob.mean = TRUE,
+                                       prob.cv = FALSE,
+                                       prob.ci = FALSE,
+                                       prob.ci.alpha = 0.05,
+                                       prob.median = FALSE,
+                                       committee.averaging = FALSE,
+                                       prob.mean.weight = TRUE,
+                                       prob.mean.weight.decay = 'proportional' )   
+
+myBiomodEM
+length(myBiomodEM@em.computed)
+myBiomodEM@em.by
+eval_em <- get_evaluations(myBiomodEM)
 
 
-# convertendo o data frame training em um shapefile da classe SpatialPoints =======
-WGScoor <- training
-coordinates(WGScoor)=~long+lat
-proj4string(WGScoor)<- CRS("+proj=longlat +datum=WGS84")
-training_data <-spTransform(WGScoor,CRS("+proj=longlat"))
-# =================================================================================
 
 
-# convertendo o data frame sdmData em um shapefile da classe SpatialPoints ========
-WGScoor2 <- sdmdata
-coordinates(WGScoor2)=~long+lat
-proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
-sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
-# =================================================================================
+myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
+                                        new.env = stck,
+                                        proj.name = 'current',
+                                        selected.models = 'all',
+                                        binary.meth = 'TSS',
+                                        compress = FALSE,
+                                        build.clamping.mask = FALSE)
 
-
-# gerando sdmData =================================================================
-d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
-d
-# =================================================================================
-
-
-# modelo  =========================================================================
-m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars','svm'), replicatin='sub', 
-         test.percent = 25, n = 2)
-m
-getModelInfo(m)
-roc(m)
-roc(m,smooth=T)
-# =================================================================================
-
-
-# predict =========================================================================
-p1 <- predict(m, newdata = stck, filename = 'p1.img') 
-plot(p1)
-nlayers(p1)
-plot(p1[[1:2]])
-
-# média
-p1m <- predict(m, newdata = stck, filename = 'p2m.img', mean=T)
-plot(p1m)
-# =================================================================================
-
-
-# ensemble ========================================================================
-e1 <- ensemble(m, newdata = stck, filename = 'e1.img', 
-               setting = list(method = 'weighted', stat = 'AUC')) 
-e1
-plot(e1)
-
-e2 <- ensemble(m, newdata = stck, filename = 'e2.img',
-               setting=list(method = 'weighted', stat = 'TSS', opt = 2))
-e2
-plot(e2)
-
-e3 <- ensemble(m, newdata = stck, filename = 'e3.img', setting = list(method = 'unweighted'))
-plot(e3)
-# ==================================================================================
-
-
-# gui ==============================================================================
-installAll()
-gui(m)
-# ==================================================================================
+plot(myBiomodProjection)
