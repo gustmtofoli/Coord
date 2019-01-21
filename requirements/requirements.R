@@ -55,3 +55,4 @@ install.packages('caretEnsemble')
 
 install.packages('shinyjs')
 install.packages("shinyWidgets")
+install.packages('shinydashboardPlus')

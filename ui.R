@@ -1,4 +1,5 @@
 library(shinydashboard)
+library(shinydashboardPlus)
 library(leaflet)
 library(DT)
 library(plotly)
@@ -7,9 +8,15 @@ library(highcharter)
 library(shinyWidgets)
 library(shinyjs)
 
-header <- dashboardHeader(
-  title = "COORD (testing)",
-  titleWidth = 200
+
+
+header <- dashboardHeaderPlus(
+  # fixed = TRUE,
+  title = tagList(
+    span(class = "logo-lg", "COORD"),
+    img(src = "parrot.svg" ))
+  # title = "COORD (testing)",
+  # titleWidth = 200
 )
 
 
@@ -17,6 +24,7 @@ sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
     menuItem("Extract Species Data",
+             icon = icon("th"),
              menuSubItem(
                "Upload Species Data",
                tabName = "coord"
@@ -27,6 +35,7 @@ sidebar <- dashboardSidebar(
              )
     ),
     menuItem("Extract Predictors",
+             icon = icon("layer-group"),
              menuSubItem(
                "Upload Predictors",
                tabName = "upload_predictors"
@@ -36,9 +45,9 @@ sidebar <- dashboardSidebar(
                tabName = "não_existe_ainda"
              )
     ),
-    menuItem("Exploratory Data Analysis", tabName = "maps"),
-    menuItem("Summary", tabName = "summary"),
-    menuItem("Predict", tabName = "predict")
+    menuItem("Exploratory Data Analysis", tabName = "maps", icon = icon("map-marked-alt")),
+    menuItem("Summary", tabName = "summary", icon = icon("th-list")),
+    menuItem("Predict", tabName = "predict", icon = icon("cube"))
   )
 )
 
@@ -419,7 +428,7 @@ body <- dashboardBody(
 
 
 shinyUI(
-  dashboardPage(
+  dashboardPagePlus(
     skin = "green",
     header,
     sidebar,
