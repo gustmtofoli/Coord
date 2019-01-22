@@ -11,12 +11,11 @@ library(shinyjs)
 
 
 header <- dashboardHeaderPlus(
-  # fixed = TRUE,
   title = tagList(
     span(class = "logo-lg", "COORD"),
-    img(src = "parrot.svg" ))
+    img(src = "owl.svg" )),
   # title = "COORD (testing)",
-  # titleWidth = 200
+  titleWidth = 187
 )
 
 
@@ -424,12 +423,9 @@ body <- dashboardBody(
   )
 )
 
-
-
-
 shinyUI(
   dashboardPagePlus(
-    skin = "green",
+    skin = "purple-light",
     header,
     sidebar,
     body
