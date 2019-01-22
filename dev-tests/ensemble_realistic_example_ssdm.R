@@ -78,10 +78,10 @@ sdmdata <- sdmdata[, c('pb', 'long', 'lat')]
 
 
 # convertendo o data frame sdmData em um shapefile da classe SpatialPoints ========
-# WGScoor2 <- sdmdata
-# coordinates(WGScoor2)=~long+lat
-# proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
-# sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+WGScoor2 <- sdmdata
+coordinates(WGScoor2)=~long+lat
+proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
+sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
 # =================================================================================
 
 
@@ -92,7 +92,7 @@ d
 
 
 # modelo  =========================================================================
-m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars','svm'), replicatin='sub', 
+m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars'), replicatin='sub', 
          test.percent = 25, n = 2)
 m
 getModelInfo(m)
@@ -118,6 +118,7 @@ e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
                setting = list(method = 'weighted', stat = 'AUC')) 
 
 plot(e1)
+
 
 e2 <- ensemble(m, newdata = stck, filename = 'e2.img',
                setting=list(method = 'weighted', stat = 'TSS', opt = 2))

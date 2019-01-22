@@ -26,10 +26,13 @@ install.packages('units')
 install.packages('rgdal')
 install.packages('sf')
 install.packages('rgeos')
-install.packages('geojsonio')
+
+
+
 
 install.packages('openssl')
 install.packages('httr')
+install.packages('geojsonio')
 install.packages('plotly')
 
 install.packages('shinycssloaders')
@@ -45,7 +48,11 @@ install.packages('SSDM')
 install.packages('spocc')
 install.packages('devtools')
 install.packages('biomod2')
+install.packages('caret')
+install.packages('spocc')
+
 install.packages('caretEnsemble')
 
 install.packages('shinyjs')
 install.packages("shinyWidgets")
+install.packages('shinydashboardPlus')
