@@ -144,3 +144,13 @@ myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
                                         build.clamping.mask = FALSE)
 
 plot(myBiomodProjection)
+projections <- stack(myBiomodProjection@proj@link)
+names(projections)
+plot(projections[[models_projected[1]]])
+
+models_projected <- myBiomodProjection@models.projected
+models_projected
+plot(myBiomodProjection, str.grep = 'Buceros.rhinoceros_AllData_RUN1_GBM')
+
+myCurrentProj <- get_predictions(myBiomodProjection)
+myCurrentProj

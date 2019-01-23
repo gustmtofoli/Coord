@@ -87,6 +87,11 @@ function(input, output, session) {
   
   observeEvent(input$run_algorithm_btn, {
     predict_variables$can_run_algorithm <- TRUE
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
+      presence_absence_data <- variables$sp_download_db[, 1:3]
+      colnames(presence_absence_data) <- c("sp", "long", "lat")
+      runAlgorithm(input$predictors_files, presence_absence_data)
+    }
   })
   
   
@@ -934,16 +939,32 @@ function(input, output, session) {
   })
   
   output$show_predict_map <- renderPlot({
-    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
-      presence_absence_data <- variables$sp_download_db[, 1:3]
-      colnames(presence_absence_data) <- c("sp", "long", "lat")
-      runAlgorithm(input$predictors_files, presence_absence_data)
-      if (!is.null(predict_variables$predictive_map)) {
-        plot(predict_variables$predictive_map)
-      }
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$predictive_map)) {
+      # presence_absence_data <- variables$sp_download_db[, 1:3]
+      # colnames(presence_absence_data) <- c("sp", "long", "lat")
+      # runAlgorithm(input$predictors_files, presence_absence_data)
+      print("INPUT_SELECT_INPUT_PREDICTIVE_MAPS:")
+      print(input$select_input_predictive_maps)
+      # if (!is.null(predict_variables$predictive_map)) {
+        predictive_map <- predict_variables$predictive_map
+        models_projected_names <- predictive_map@models.projected
+        projections <- stack(predictive_map@proj@link)
+        plot(predictive_map)
+        # plot(predictive_map, str.grep = input$select_input_predictive_maps)
+        # plot(projections[[input$select_input_predictive_maps]])
+      # }
     }
-    # predict_variables$can_run_algorithm <- FALSE
   })
+  
+  output$select_predictive_maps <- renderUI(
+    if (!is.null(predict_variables$predictive_map)) {
+      predictive_map <- predict_variables$predictive_map
+      models_projected_names <- predictive_map@models.projected
+      selectInput("select_input_predictive_maps", label = "Potential distribution map: ",
+                  choices = models_projected_names,
+                  selected = 1, multiple = FALSE)
+    }
+  )
   
   output$show_ensemble_map <- renderPlot({
       if (!is.null(predict_variables$ensemble_map)) {
@@ -1213,7 +1234,7 @@ function(input, output, session) {
       "Data Bases with records",
       paste0(n_data_bases),
       icon = icon("list"),
-      color = "light-blue", 
+      color = "light-blue",
       fill = TRUE
     )
   })

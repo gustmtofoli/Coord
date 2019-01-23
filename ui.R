@@ -408,6 +408,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Models Predictive Map",
           status = "primary",
+          uiOutput("select_predictive_maps"),
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         ),
         
@@ -425,7 +426,7 @@ body <- dashboardBody(
 
 shinyUI(
   dashboardPagePlus(
-    skin = "purple-light",
+    skin = "green",
     header,
     sidebar,
     body
