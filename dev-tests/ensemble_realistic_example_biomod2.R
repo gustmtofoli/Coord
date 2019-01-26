@@ -69,6 +69,10 @@ myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata$pb,
                                      resp.name = spName)
 myBiomodData
 plot(myBiomodData)
+level.plot(sdmdata$pb, 
+           sdmdata[, c('long', 'lat')],
+           show.scale = TRUE,
+           title = "Teste")
 # =================================================================================
 
 
@@ -93,6 +97,8 @@ myBiomodModelOut <- BIOMOD_Modeling(
   modeling.id = "dsadsa")
 
 myBiomodModelOut
+
+
 myBiomodModelOut@models.computed[1]
 evaluations <- get_evaluations(myBiomodModelOut)
 colnames(evaluations)
@@ -143,7 +149,8 @@ myBiomodProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
                                         compress = FALSE,
                                         build.clamping.mask = FALSE)
 
-plot(myBiomodProjection)
+plot(myBiomodModelOut@variables.importances@val)
+plot(myBiomodProjection@proj@val)
 projections <- stack(myBiomodProjection@proj@link)
 names(projections)
 plot(projections[[models_projected[1]]])
@@ -154,3 +161,11 @@ plot(myBiomodProjection, str.grep = 'Buceros.rhinoceros_AllData_RUN1_GBM')
 
 myCurrentProj <- get_predictions(myBiomodProjection)
 myCurrentProj
+
+ensemble_forecasting_proj <- BIOMOD_EnsembleForecasting(
+                          projection.output = myBiomodProjection,
+                          EM.output = myBiomodEM)
+
+plot(ensemble_forecasting_proj)
+ensemble_forecasting_proj@models.projected
+plot(ensemble_forecasting_proj@proj@val[[1]])

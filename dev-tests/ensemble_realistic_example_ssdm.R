@@ -6,7 +6,6 @@ library(sdm)
 library(raster)
 library(dismo)
 library(SSDM)
-
 # # le arquivo
 # horn=read.csv("/home/gustavo/Documentos/SDMGISR-files/2_SDM Data/hornbill_my1.csv")
 # 
@@ -60,6 +59,7 @@ head(sdmdata)
 sdmdata=na.omit(sdmdata)
 summary(sdmdata)
 sdmdata <- sdmdata[, c('pb', 'long', 'lat')]
+nrow(sdmdata)
 # =================================================================================
 
 # separando conjuntos de treino e teste ===========================================
@@ -82,12 +82,14 @@ WGScoor2 <- sdmdata
 coordinates(WGScoor2)=~long+lat
 proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
 sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
+plot(sdmData_shapefile)
 # =================================================================================
 
 
 # gerando sdmData =================================================================
 d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
 d
+plot(d)
 # =================================================================================
 
 
@@ -95,14 +97,36 @@ d
 m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars'), replicatin='sub', 
          test.percent = 25, n = 2)
 m
+
 getModelInfo(m)
 roc(m)
 roc(m,smooth=T)
 # =================================================================================
 
+sdm_occ <- occ2df(buceros_rhinoceros)
+?modelling
+m_ssdm <- modelling('RF', sdm_occ[1:3], 
+                 stck, Xcol = "longitude", Ycol = 'latitude', verbose = FALSE)
+m_ssdm
+m_ssdm@evaluation
+plot(m_ssdm@projection, main = 'RF')
 
-# predict =========================================================================
-p1 <- predict(m, newdata = stck, filename = 'p1.img') 
+ESDM <- ensemble_modelling(c('CTA', 'MARS'), sdm_occ[1:3],
+                           stck, rep = 1, Xcol = 'longitude', Ycol = 'latitude',
+                           ensemble.thresh = c(0.6), verbose = FALSE)
+
+
+ESDM@algorithm.correlation
+ESDM@algorithm.evaluation
+ESDM@evaluation
+ESDM@variable.importance
+plot(ESDM@binary)
+plot(ESDM@uncertainty)
+plot(ESDM@projection)
+
+
+  # predict =========================================================================
+p1 <- predict(m, newdata = stck, filename = 'p1.img', overwrite = TRUE) 
 plot(p1)
 nlayers(p1)
 plot(p1[[1:2]])

@@ -36,7 +36,9 @@ function(input, output, session) {
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
-                                        original_sp_nrow = 0)
+                                        original_sp_nrow = 0,
+                                        group_predictive_maps = FALSE,
+                                        group_ensemble_maps = FALSE)
   
   filter_variables <- reactiveValues(sp_filter = NULL)
   
@@ -97,12 +99,6 @@ function(input, output, session) {
   
   
   observeEvent(input$download_from_DB, {
-    showModal(modalDialog(
-      title = "Hmmm...",
-      footer = NULL,
-      easyClose = FALSE,
-      "Searching Data..."
-    ))
     species_download <- c()
     
     if (input$upload_file_switch_btn) {
@@ -111,6 +107,20 @@ function(input, output, session) {
     else {
       species_download <- input$sp_name
     }
+    
+    showModal(modalDialog(
+      title = "Searching Data",
+      footer = NULL,
+      easyClose = FALSE,
+      paste0("Species: ", species_download),
+      br(),
+      paste0("Data base(s): ", input$select_data_bases)
+
+    ))
+    
+    print("\n\n========================")
+    print(input$select_data_bases)
+    
     
     data_from_DB <- occ(species_download, from = input$select_data_bases)
     df_data <- occ2df(data_from_DB)
@@ -475,39 +485,41 @@ function(input, output, session) {
       #                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
       
       # ===============================================================================
+      if (input$ensemble_switch_btn) {
+        myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
+                                               chosen.models = 'all',
+                                               em.by = 'all',
+                                               eval.metric = input$select_input_eval_method_ensemble,
+                                               eval.metric.quality.threshold = c(0.7),
+                                               models.eval.meth = input$select_input_eval_method,
+                                               prob.mean = TRUE,
+                                               prob.cv = FALSE,
+                                               prob.ci = FALSE,
+                                               prob.ci.alpha = 0.05,
+                                               prob.median = FALSE,
+                                               committee.averaging = FALSE,
+                                               prob.mean.weight = TRUE,
+                                               prob.mean.weight.decay = 'proportional' )   
+        
+        # myBiomodEM
+        print("\n>>>>>>ENSEMBLE")
+        print(get_evaluations(myBiomodEM))
+        predict_variables$ensemble_model <- myBiomodEM
+        # BiomodEnsembleProjection <- BIOMOD_Projection(modeling.output = myBiomodEM,
+        #                                         new.env = stck,
+        #                                         proj.name = 'current',
+        #                                         selected.models = 'all',
+        #                                         binary.meth = 'TSS',
+        #                                         compress = FALSE,
+        #                                         build.clamping.mask = FALSE)
+        
+        predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
+                                              EM.output = myBiomodEM)
+        
+        # predict_variables$ensemble_map <- BiomodEnsembleProjection
+      }
       
-      myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
-                                             chosen.models = 'all',
-                                             em.by = 'all',
-                                             eval.metric = input$select_input_eval_method_ensemble,
-                                             eval.metric.quality.threshold = c(0.7),
-                                             models.eval.meth = input$select_input_eval_method,
-                                             prob.mean = TRUE,
-                                             prob.cv = FALSE,
-                                             prob.ci = FALSE,
-                                             prob.ci.alpha = 0.05,
-                                             prob.median = FALSE,
-                                             committee.averaging = FALSE,
-                                             prob.mean.weight = TRUE,
-                                             prob.mean.weight.decay = 'proportional' )   
       
-      # myBiomodEM
-      print("\n>>>>>>ENSEMBLE")
-      print(get_evaluations(myBiomodEM))
-      predict_variables$ensemble_model <- myBiomodEM
-      
-      # BiomodEnsembleProjection <- BIOMOD_Projection(modeling.output = myBiomodEM,
-      #                                         new.env = stck,
-      #                                         proj.name = 'current',
-      #                                         selected.models = 'all',
-      #                                         binary.meth = 'TSS',
-      #                                         compress = FALSE,
-      #                                         build.clamping.mask = FALSE)
-      
-      predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
-                                            EM.output = myBiomodEM)
-      
-      # predict_variables$ensemble_map <- BiomodEnsembleProjection
       
       
       
@@ -938,21 +950,47 @@ function(input, output, session) {
     }
   })
   
+  observeEvent(input$group_pred_maps_btn, {
+    if (input$group_pred_maps_btn) {
+      secondary_variables$group_predictive_maps <- TRUE
+    }
+    else {
+      secondary_variables$group_predictive_maps <- FALSE
+    }
+  })
+  
+  observeEvent(input$group_ensemble_maps_btn, {
+    if (input$group_ensemble_maps_btn) {
+      secondary_variables$group_ensemble_maps <- TRUE
+    }
+    else {
+      secondary_variables$group_ensemble_maps <- FALSE
+    }
+  })
+  
   output$show_predict_map <- renderPlot({
+    group_maps <- secondary_variables$group_predictive_maps
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$predictive_map)) {
       # presence_absence_data <- variables$sp_download_db[, 1:3]
       # colnames(presence_absence_data) <- c("sp", "long", "lat")
       # runAlgorithm(input$predictors_files, presence_absence_data)
-      print("INPUT_SELECT_INPUT_PREDICTIVE_MAPS:")
-      print(input$select_input_predictive_maps)
+      # print("INPUT_SELECT_INPUT_PREDICTIVE_MAPS:")
+      # print(input$select_input_predictive_maps)
       # if (!is.null(predict_variables$predictive_map)) {
-        predictive_map <- predict_variables$predictive_map
-        models_projected_names <- predictive_map@models.projected
-        projections <- stack(predictive_map@proj@link)
-        plot(predictive_map)
-        # plot(predictive_map, str.grep = input$select_input_predictive_maps)
-        # plot(projections[[input$select_input_predictive_maps]])
-      # }
+      predictive_map <- predict_variables$predictive_map
+      models_projected_names <- predictive_map@models.projected
+      projections <- stack(predictive_map@proj@link)
+      
+      # print(input$group_pred_maps_btn)
+      if (group_maps) {
+        plot(predictive_map@proj@val)
+      }
+      else {
+        plot(predictive_map@proj@val[[input$select_input_predictive_maps]])
+      }
+      # plot(predictive_map, str.grep = input$select_input_predictive_maps)
+      # plot(projections[[input$select_input_predictive_maps]])
+    # }
     }
   })
   
@@ -960,16 +998,35 @@ function(input, output, session) {
     if (!is.null(predict_variables$predictive_map)) {
       predictive_map <- predict_variables$predictive_map
       models_projected_names <- predictive_map@models.projected
-      selectInput("select_input_predictive_maps", label = "Potential distribution map: ",
+      selectInput("select_input_predictive_maps", label = "Choose predictive map: ",
+                  choices = models_projected_names,
+                  selected = 1, multiple = FALSE)
+    }
+  )
+  
+  output$select_ensemble_maps <- renderUI(
+    if (!is.null(predict_variables$ensemble_map)) {
+      ensemble_map <- predict_variables$ensemble_map
+      models_projected_names <- ensemble_map@models.projected
+      selectInput("select_input_ensemble_maps", label = "Choose predictive map: ",
                   choices = models_projected_names,
                   selected = 1, multiple = FALSE)
     }
   )
   
   output$show_ensemble_map <- renderPlot({
-      if (!is.null(predict_variables$ensemble_map)) {
-        plot(predict_variables$ensemble_map)
+    group_maps <- secondary_variables$group_ensemble_maps
+    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$ensemble_map)) {
+      predictive_map <- predict_variables$ensemble_map
+      # plot(predictive_map@proj@val)
+      # plot(predict_variables$ensemble_map)
+      if (group_maps) {
+        plot(predictive_map@proj@val)
       }
+      else {
+        plot(predictive_map@proj@val[[input$select_input_ensemble_maps]])
+      }
+    }
   })
   
   output$select_algorithm <- renderUI({
@@ -1092,11 +1149,8 @@ function(input, output, session) {
   
   output$info_eval_AUC <- DT::renderDataTable({
     print(input$select_eval_method)
-    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
+    if (!is.null(predict_variables$predictive_model)) {
       models <- predict_variables$predictive_model
-      ensemble_model <- predict_variables$ensemble_model
-      ensemble_evaluations <- get_evaluations(ensemble_model)
-      df_eval_ensemble <- data.frame(ensemble_evaluations)
       evaluations <- get_evaluations(models)
       df_eval <- data.frame(evaluations)
       ini_col <- 1
@@ -1110,8 +1164,11 @@ function(input, output, session) {
         ini_col <- ini_col + 3
       }
       
-      if (!is.null(ensemble_model)) {
+      if (!is.null(predict_variables$ensemble_model)) {
         ini_col <- 1
+        ensemble_model <- predict_variables$ensemble_model
+        ensemble_evaluations <- get_evaluations(ensemble_model)
+        df_eval_ensemble <- data.frame(ensemble_evaluations)
         for (j in 1:length(ensemble_model@em.computed)) {
           df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
           ini_col <- ini_col + 4
@@ -1124,10 +1181,7 @@ function(input, output, session) {
   })
   
   output$info_eval_TSS <- DT::renderDataTable({
-    if (!is.null(predict_variables$predictive_model) & !is.null(predict_variables$ensemble_model)) {
-      ensemble_model <- predict_variables$ensemble_model
-      ensemble_evaluations <- get_evaluations(ensemble_model)
-      df_eval_ensemble <- data.frame(ensemble_evaluations)
+    if (!is.null(predict_variables$predictive_model)) {
       models <- predict_variables$predictive_model
       evaluations <- get_evaluations(models)
       df_eval <- data.frame(evaluations)
@@ -1142,7 +1196,10 @@ function(input, output, session) {
         ini_col <- ini_col + 3
       }
       
-      if (!is.null(ensemble_model)) {
+      if (!is.null(predict_variables$ensemble_model)) {
+        ensemble_model <- predict_variables$ensemble_model
+        ensemble_evaluations <- get_evaluations(ensemble_model)
+        df_eval_ensemble <- data.frame(ensemble_evaluations)
         ini_col <- 1
         for (j in 1:length(ensemble_model@em.computed)) {
           df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]

@@ -13,7 +13,7 @@ library(shinyjs)
 header <- dashboardHeaderPlus(
   title = tagList(
     span(class = "logo-lg", "COORD"),
-    img(src = "owl.svg" )),
+    img(src = "3d.svg" )),
   # title = "COORD (testing)",
   titleWidth = 187
 )
@@ -406,9 +406,13 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Models Predictive Map",
+          title = "Potential Distribution Map",
           status = "primary",
-          uiOutput("select_predictive_maps"),
+          materialSwitch(inputId = "group_pred_maps_btn", label = "Group: ", status = "primary", right = FALSE),
+          conditionalPanel(
+            "!input.group_pred_maps_btn",
+            uiOutput("select_predictive_maps")
+          ),
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         ),
         
@@ -417,6 +421,11 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Ensemble Map",
           status = "primary",
+          materialSwitch(inputId = "group_emsemble_maps_btn", label = "Group: ", status = "primary", right = FALSE),
+          conditionalPanel(
+            "!input.group_emsemble_maps_btn",
+            uiOutput("select_ensemble_maps")
+          ),
           plotOutput("show_ensemble_map") %>% withSpinner(color="#0dc5c1")
         )
       )
