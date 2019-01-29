@@ -22,21 +22,21 @@ header <- dashboardHeaderPlus(
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Extract Species Data",
+    menuItem("Species Data",
              icon = icon("th"),
              menuSubItem(
-               "Upload Species Data",
-               tabName = "coord"
+               "Upload File",
+               tabName = "not_yet"
              ),
              menuSubItem(
                "From Data Bases",
                tabName = "from_data_bases"
              )
     ),
-    menuItem("Extract Predictors",
-             icon = icon("layer-group"),
+    menuItem("Predictors",
+             icon = icon("leaf"),
              menuSubItem(
-               "Upload Predictors",
+               "Upload Files",
                tabName = "upload_predictors"
              ),
              menuSubItem(
@@ -44,8 +44,17 @@ sidebar <- dashboardSidebar(
                tabName = "não_existe_ainda"
              )
     ),
-    menuItem("Exploratory Data Analysis", tabName = "maps", icon = icon("map-marked-alt")),
-    menuItem("Summary", tabName = "summary", icon = icon("th-list")),
+    # menuItem("Summary", tabName = "summary", icon = icon("th-list")),
+    menuItem("Exploratory Data Analysis", icon = icon("map"),
+             menuSubItem(
+               "Spatial Distribution",
+               tabName = "maps"
+             ),
+             menuSubItem(
+               "Summary",
+               tabName = "summary"
+             )),
+    menuItem("Presence/Absense", tabName = "coord", icon = icon("th-list")),
     menuItem("Predict", tabName = "predict", icon = icon("cube"))
   )
 )
@@ -421,11 +430,6 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Ensemble Map",
           status = "primary",
-          materialSwitch(inputId = "group_emsemble_maps_btn", label = "Group: ", status = "primary", right = FALSE),
-          conditionalPanel(
-            "!input.group_emsemble_maps_btn",
-            uiOutput("select_ensemble_maps")
-          ),
           plotOutput("show_ensemble_map") %>% withSpinner(color="#0dc5c1")
         )
       )

@@ -37,8 +37,7 @@ function(input, output, session) {
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
                                         original_sp_nrow = 0,
-                                        group_predictive_maps = FALSE,
-                                        group_ensemble_maps = FALSE)
+                                        group_predictive_maps = FALSE)
   
   filter_variables <- reactiveValues(sp_filter = NULL)
   
@@ -314,6 +313,27 @@ function(input, output, session) {
     df_res_sum_per_sp_bin
     
   }
+  
+  values <- reactiveValues()
+  
+  queryMagic <- function() {
+    print("Warning")
+    
+    return("Data")
+  }
+  
+  output$console <- renderPrint({
+    logText()
+    return(print(values[["log"]]))
+    # You could also use grep("Warning", values[["log"]]) to get warning messages and use shinyBS package
+    # to create alert message
+  })
+  
+  logText <- reactive({
+    values[["log"]] <- capture.output(data <- queryMagic())
+    
+    
+  })
   
   runAlgorithm = function(predictors, pres_abs) {
     if (predict_variables$can_run_algorithm) {
@@ -959,15 +979,6 @@ function(input, output, session) {
     }
   })
   
-  observeEvent(input$group_ensemble_maps_btn, {
-    if (input$group_ensemble_maps_btn) {
-      secondary_variables$group_ensemble_maps <- TRUE
-    }
-    else {
-      secondary_variables$group_ensemble_maps <- FALSE
-    }
-  })
-  
   output$show_predict_map <- renderPlot({
     group_maps <- secondary_variables$group_predictive_maps
     if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$predictive_map)) {
@@ -1004,28 +1015,14 @@ function(input, output, session) {
     }
   )
   
-  output$select_ensemble_maps <- renderUI(
-    if (!is.null(predict_variables$ensemble_map)) {
-      ensemble_map <- predict_variables$ensemble_map
-      models_projected_names <- ensemble_map@models.projected
-      selectInput("select_input_ensemble_maps", label = "Choose predictive map: ",
-                  choices = models_projected_names,
-                  selected = 1, multiple = FALSE)
-    }
-  )
-  
   output$show_ensemble_map <- renderPlot({
-    group_maps <- secondary_variables$group_ensemble_maps
-    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$ensemble_map)) {
-      predictive_map <- predict_variables$ensemble_map
-      # plot(predictive_map@proj@val)
-      # plot(predict_variables$ensemble_map)
-      if (group_maps) {
-        plot(predictive_map@proj@val)
-      }
-      else {
-        plot(predictive_map@proj@val[[input$select_input_ensemble_maps]])
-      }
+    if ((predict_variables$can_run_algorithm) & !is.null(predict_variables$ensemble_map)) {
+        ensemble_map <- predict_variables$ensemble_map
+        # plot(predictive_map@proj@val)
+        # plot(predict_variables$ensemble_map)
+        plot(ensemble_map@proj@val)
+        # plot(ensemble_map)
+        # plot(ensemble_map@proj@val[[input$select_input_ensemble_maps]])
     }
   })
   
