@@ -87,6 +87,7 @@ plot(sdmData_shapefile)
 
 
 # gerando sdmData =================================================================
+library(sdm)
 d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
 d
 plot(d)
@@ -102,10 +103,10 @@ getModelInfo(m)
 roc(m)
 roc(m,smooth=T)
 # =================================================================================
-
+library(SSDM)
 sdm_occ <- occ2df(buceros_rhinoceros)
 ?modelling
-m_ssdm <- modelling('RF', sdm_occ[1:3], 
+m_ssdm <- modelling('RF', sdmdata, 
                  stck, Xcol = "longitude", Ycol = 'latitude', verbose = FALSE)
 m_ssdm
 m_ssdm@evaluation
@@ -124,6 +125,9 @@ plot(ESDM@binary)
 plot(ESDM@uncertainty)
 plot(ESDM@projection)
 
+SSDM <- stack_modelling(c('CTA', 'SVM'), sdmdata, Env, rep = 1,
+                        Xcol = 'long', Ycol = 'lat',
+                        Spcol = 'pb', method = "pSSDM", verbose = FALSE)
 
   # predict =========================================================================
 p1 <- predict(m, newdata = stck, filename = 'p1.img', overwrite = TRUE) 
