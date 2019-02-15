@@ -49,7 +49,6 @@ install.packages('spocc')
 install.packages('devtools')
 install.packages('biomod2')
 install.packages('caret')
-install.packages('spocc')
 
 install.packages('caretEnsemble')
 

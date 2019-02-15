@@ -19,8 +19,9 @@ for(i in 1:NROW(datafiles)){
 }
 
 sp.names = c("Buceros rhinoceros", "Falco tinnunculus")
+# sp.names = c("Buceros rhinoceros")
 # falco = c("Falco tinnunculus")
-species = occ(spp, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
+species = occ(sp.names, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
 head(species)
 data = occ2df(species)
 # apenas lat e long
@@ -39,6 +40,7 @@ pb_list = list(list())
 prs1 = NULL
 prs1_df = NULL
 colu <- 0
+
 for (sp.n in sp.names) {
   colu <- colu + 1
   count <- count + 1
@@ -48,10 +50,10 @@ for (sp.n in sp.names) {
   prs1_df$long <- data_subset$longitude
   prs1_df$lat <- data_subset$latitude
   
-  if (count <= 1) {
-    set.seed(1)
-    backgr = randomPoints(stck, 500) #500 random points
-  }
+  # if (count <= 1) {
+  set.seed(1)
+  backgr = randomPoints(stck, 500) #500 random points
+  # }
 
   absvals = extract(stck, backgr) #choose absence values from the background
   absvals_df <- data.frame(absvals)
@@ -82,12 +84,13 @@ for (sp.n in sp.names) {
 
 head(sdmdata)
 sdmdata=na.omit(sdmdata)
+subset(sdmdata, sdmdata$`Buceros rhinoceros` == 1)
 summary(sdmdata)
 plot(sdmdata)
 
 myBiomodData = NULL
 for (sp.n in sp.names) {
-  myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata[, sp.names[2]],
+  myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata[, sp.n],
                                        expl.var = stck,
                                        resp.xy = sdmdata[, c('long', 'lat')],
                                        resp.name = sp.n)
@@ -140,4 +143,13 @@ for (sp.n in sp.names) {
 }
 
 plot(myBiomodData)
+
+myBiomodModelOut
+get_evaluations(myBiomodModelOut)
+
+myBiomodEM
+get_evaluations(myBiomodEM)
+
+plot(myBiomodProjection)
+plot(myBiomodEF)
 

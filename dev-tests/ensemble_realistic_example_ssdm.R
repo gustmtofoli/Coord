@@ -28,7 +28,15 @@ for(i in 1:NROW(datafiles)){
 
 # download das ocorrencias da espécie utilizando o GBIF ===========================
 library(spocc)
-spp = c("Buceros rhinoceros")
+spp = c("Buceros rhinoceros", "Falco tinnunculus")
+
+species  = occ(spp, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
+head(species)
+data = occ2df(species)
+# apenas lat e long
+data <- data[, 2:3]
+nrow(data)
+
 buceros_rhinoceros = occ(spp, from = c('gbif'), gbifopts = list(hasCoordinate=TRUE))
 head(buceros_rhinoceros)
 data = occ2df(buceros_rhinoceros)
@@ -48,7 +56,7 @@ prs1_df$lat <- data$latitude
 
 # gerando pontos de ausências para o modelo =======================================
 set.seed(1)
-backgr = randomPoints(stck, 500) #500 random points
+backgr = randomPoints(stck, 1000) #500 random points
 absvals = extract(stck, backgr) #choose absence values from the background
 absvals_df <- data.frame(absvals)
 absvals_df$long <- backgr[, 'x']
@@ -78,6 +86,8 @@ nrow(sdmdata)
 
 
 # convertendo o data frame sdmData em um shapefile da classe SpatialPoints ========
+nrow(subset(sdmdata, sdmdata$pb == 1))
+nrow(subset(sdmdata, sdmdata$pb == 0))
 WGScoor2 <- sdmdata
 coordinates(WGScoor2)=~long+lat
 proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
@@ -100,13 +110,13 @@ m <- sdm(pb~.,data=d,methods=c('rf', 'fda','mars'), replicatin='sub',
 m
 
 getModelInfo(m)
-roc(m)
-roc(m,smooth=T)
+roc(m, legend = FALSE)
+roc(m,smooth=T, legend = FALSE)
 # =================================================================================
 library(SSDM)
-sdm_occ <- occ2df(buceros_rhinoceros)
+sdm_occ <- occ2df(species)
 ?modelling
-m_ssdm <- modelling('RF', sdmdata, 
+m_ssdm <- modelling('RF', sdm_occ, 
                  stck, Xcol = "longitude", Ycol = 'latitude', verbose = FALSE)
 m_ssdm
 m_ssdm@evaluation
@@ -125,6 +135,7 @@ plot(ESDM@binary)
 plot(ESDM@uncertainty)
 plot(ESDM@projection)
 
+?stack_modelling
 SSDM <- stack_modelling(c('CTA', 'SVM'), sdmdata, Env, rep = 1,
                         Xcol = 'long', Ycol = 'lat',
                         Spcol = 'pb', method = "pSSDM", verbose = FALSE)
