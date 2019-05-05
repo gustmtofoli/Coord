@@ -18,6 +18,7 @@ library(caret)
 # library(sdm)
 library(dismo)
 library(biomod2)
+library(rgdal)
 
 function(input, output, session) {
 
@@ -86,16 +87,7 @@ function(input, output, session) {
                                                         
                                              )
   
-  observeEvent(input$run_algorithm_btn, {
-    predict_variables$can_run_algorithm <- TRUE
-    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
-      presence_absence_data <- variables$sp_download_db[, 1:3]
-      colnames(presence_absence_data) <- c("sp", "long", "lat")
-      runAlgorithm(input$predictors_files, presence_absence_data)
-    }
-  })
-  
-  
+  source("PredictService.R", local=TRUE)
   
   observeEvent(input$download_from_DB, {
     species_download <- c()
@@ -142,10 +134,6 @@ function(input, output, session) {
         paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
       ))
     }
-  })
-  
-  observeEvent(input$select_input_algorithm, {
-    predict_variables$can_run_algorithm <- FALSE
   })
   
   observeEvent(input$predictors_files, {
@@ -195,367 +183,13 @@ function(input, output, session) {
     }
   })
   
-  remove_species_outliers = function(grid_read, sp_read) {
-    # lon_bound <- c()
-    # lat_bound <- c()
-    # for (i in 1:length(unique(grid_read$lon))) {
-    #   subset_df <- subset(grid_read, lon == unique(grid_read$lon)[i])
-    #   subset_df <- subset_df[order(subset_df$lat, decreasing = FALSE), ]
-    #   lon_bound <- c(lon_bound, subset_df[1, ]$lon)
-    #   lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
-    #   lat_bound <- c(lat_bound, subset_df[1, ]$lat)
-    #   lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
-    # }
-    # 
-    # for (i in 1:length(unique(grid_read$lat))) {
-    #   subset_df <- subset(grid_read, lat == unique(grid_read$lat)[i])
-    #   subset_df <- subset_df[order(subset_df$lon, decreasing = FALSE), ]
-    #   lon_bound <- c(lon_bound, subset_df[1, ]$lon)
-    #   lon_bound <- c(lon_bound, subset_df[nrow(subset_df), ]$lon)
-    #   lat_bound <- c(lat_bound, subset_df[1, ]$lat)
-    #   lat_bound <- c(lat_bound, subset_df[nrow(subset_df), ]$lat)
-    # }
-    # 
-    # boundary_coord <- data.frame(lon = lon_bound, lat = lat_bound)
-    # boundary_coord <- unique(boundary_coord)
+  source("SpeciesFreq.R", local=TRUE)
+
+  source("SpeciesOutliers.R", local=TRUE)
     
-    # print(boundary_coord)
-    
-    
-    # subset(sp_read, 
-    #                 sp_read$lon <= boundary_coord$lon
-    #               & sp_read$lon > boundary_coord$lon
-    #               & sp_read$lat <= boundary_coord$lat
-    #               & sp_read$lat > boundary_coord$lat
-    #        )
-    subset(sp_read, sp_read$lon >= min(grid_read$lon)
-                             & sp_read$lon <= max(grid_read$lon)
-                             & sp_read$lat >= min(grid_read$lat)
-                             & sp_read$lat <= max(grid_read$lat))
-  }
+  source("CalculatePresenceAbsense.R", local=TRUE)
   
-  get_species_freq = function() {
-    if (!is.null(input$file2)) {
-      sp_read <- variables$sp_read
-      df_freq <- count(sp_read, sp_read$sp)
-      data.frame(Specie = df_freq$`sp_read$sp`, Freq = df_freq$n)
-    }
-  }
-  
-  get_species_outliers = function() {
-    if (!is.null(input$file2) & !is.null(input$file1)) {
-      sp_read <- variables$sp_read
-      grid_read <- variables$grid_read
-      subset(sp_read, sp_read$lon < min(grid_read$lon) 
-             | sp_read$lon > max(grid_read$lon)
-             | sp_read$lat < min(grid_read$lat) 
-             | sp_read$lat > max(grid_read$lat))
-    }
-  }
-  
-  get_species_outliers_freq = function() {
-    sp_out <- get_species_outliers()
-    df_freq <- count(sp_out, sp_out$sp)
-    data.frame(Specie = df_freq$`sp_out$sp`, Freq = df_freq$n)
-  }
-  
-  get_results = function(grid_read, sp_read) {
-    sp_read <- variables$sp_without_outliers
-    
-    sp_freq <- count(sp_read, sp_read$sp)
-    
-    d = 0.5
-    r = d/2
-    
-    result_all <- c()
-    for (sp_index in 1:nrow(sp_read)) {
-      result <- c()
-      for (grid_index in 1:nrow(grid_read)) {
-        result <- c(result, ifelse(sp_read[sp_index,2:3]$lon <= grid_read[grid_index,]$lon + r &
-                                     sp_read[sp_index,2:3]$lon >= grid_read[grid_index,]$lon - r &
-                                     sp_read[sp_index,2:3]$lat <= grid_read[grid_index,]$lat + r &
-                                     sp_read[sp_index,2:3]$lat >= grid_read[grid_index,]$lat - r, 1, 0))
-      }
-      result_all <- c(result_all, result)
-    }
-    
-    res_test <- array(result_all, dim = c(nrow(grid_read), nrow(sp_read)))
-    
-    colnames(res_test) <- sp_read$sp
-    
-    start_col <- 1
-    
-    res_sum_per_sp <- c()
-    for (i in 1:nrow(sp_freq)) {
-      res_sum_per_sp <- c(res_sum_per_sp, apply(res_test[, start_col:(start_col + sp_freq$n[i] - 1)], 1, sum))
-      
-      start_col <- sp_freq$n[i] + 1
-    }
-    
-    res_sum_per_sp <- array(res_sum_per_sp, dim = c(nrow(grid_read), nrow(sp_freq)))
-    
-    colnames(res_sum_per_sp) <- sp_freq$`sp_read$sp`
-    
-    res_sum_per_sp_bin <- ifelse(res_sum_per_sp[ , ] > 0, 1, 0)
-    
-    df_res_sum_per_sp_bin <- data.frame(res_sum_per_sp_bin)
-    
-    df_res_sum_per_sp_bin$TOTAL <- apply(res_sum_per_sp_bin, 1, sum)
-    
-    df_res_sum_per_sp_bin["TOTAL", ] <- apply(df_res_sum_per_sp_bin, 2, sum)
-    
-    grid_read["-", ] <- "-"
-    
-    df_res_sum_per_sp_bin$lon <- grid_read$lon
-    
-    df_res_sum_per_sp_bin$lat <- grid_read$lat
-    
-    df_res_sum_per_sp_bin
-    
-  }
-  
-  values <- reactiveValues()
-  
-  queryMagic <- function() {
-    print("Warning")
-    
-    return("Data")
-  }
-  
-  output$console <- renderPrint({
-    logText()
-    return(print(values[["log"]]))
-    # You could also use grep("Warning", values[["log"]]) to get warning messages and use shinyBS package
-    # to create alert message
-  })
-  
-  logText <- reactive({
-    values[["log"]] <- capture.output(data <- queryMagic())
-    
-    
-  })
-  
-  runAlgorithm = function(predictors, pres_abs) {
-    if (predict_variables$can_run_algorithm) {
-      
-    
-      start_time <- Sys.time()
-      showModal(modalDialog(
-        title = "Hey",
-        footer = NULL,
-        easyClose = FALSE,
-        "This may take some time... coffee?"
-      ))
-      
-      datafiles <- predictors
-      
-      stck = stack() 
-      names_stack <- c()
-      for(i in 1:NROW(datafiles)){
-        names_stack <- c(names_stack, substring(datafiles[i, ]$name, 1, nchar(datafiles[i, ]$name) - 4))
-        tempraster = raster(datafiles[i, ]$datapath)
-        stck = stack(stck,tempraster)
-      }
-      names(stck) <- names_stack
-      # print(stck)
-      
-      data <- pres_abs
-      
-      data <- data[, 2:3]
-      # print(data)
-      
-      
-     
-      prs1 = extract(stck, data)
-      prs1_df <- data.frame(prs1)
-      prs1_df$long <- data$long
-      prs1_df$lat <- data$lat
-      # print(prs1)
-      
-      n <- runif(1, min=1, max=999999);
-      set.seed(n)
-      backgr = randomPoints(stck, nrow(data)) 
-      absvals = extract(stck, backgr) 
-      absvals_df <- data.frame(absvals)
-      absvals_df$long <- backgr[, 'x']
-      absvals_df$lat <- backgr[, 'y']
-      pb = c(rep(1, nrow(prs1)), rep(0, nrow(absvals)))
-      # print(pb)
-      sdmdata = data.frame(cbind(pb, rbind(prs1_df, absvals_df)))
-      # head(sdmdata)
-      sdmdata=na.omit(sdmdata)
-      # summary(sdmdata)
-      
-      # === SDM ===========================================================
-      # WGScoor2 <- sdmdata
-      # coordinates(WGScoor2)=~long+lat
-      # proj4string(WGScoor2)<- CRS("+proj=longlat +datum=WGS84")
-      # sdmData_shapefile <-spTransform(WGScoor2,CRS("+proj=longlat"))
-      # 
-      # d <- sdmData(formula=pb~., train=sdmData_shapefile, predictors=stck)
-      # ===================================================================
-      
-      # === BIOMOD =========================================================
-      spName <- input$sp_name
-      myBiomodData <- BIOMOD_FormatingData(resp.var = sdmdata$pb,
-                                           expl.var = stck,
-                                           resp.xy = sdmdata[, c('long', 'lat')],
-                                           resp.name = spName)
-      
-      # ======================================================================
-      
-      
-      algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-      
-      algorithm <- c()
-      for (algo in algorithm_selected) {
-        algorithm <- c(algorithm, algo)
-      }
-      
-      
-      # === SDM ========================================================================
-      # m <- sdm(pb~.,data=d,methods=algorithm, replicatin='sub', 
-      #          test.percent = (100 - as.numeric(input$training_set)), n = as.numeric(input$number_of_executions))
-      # ================================================================================
-      
-      # === BIOMOD =====================================================================
-      print(">>>>>>>>>>")
-      print(input$select_input_eval_method)
-      print(">>>>>>>>>>")
-      myBiomodOption <- BIOMOD_ModelingOptions()
-      myBiomodModelOut <- BIOMOD_Modeling(
-        myBiomodData,
-        models = algorithm,
-        models.options = myBiomodOption,
-        NbRunEval=as.numeric(input$number_of_executions),
-        DataSplit=as.numeric(input$training_set),
-        Prevalence=0.5,
-        VarImport=3, #length(stck@layers),
-        # models.eval.meth = c('TSS','ROC'),
-        models.eval.meth = input$select_input_eval_method,
-        SaveObj = FALSE,
-        rescal.all.models = TRUE,
-        do.full.models = FALSE,
-        modeling.id = paste("só pra passar","FirstModeling",sep=""))
-      
-      # ================================================================================
-      
-      predict_variables$predictive_model <- myBiomodModelOut
-      
-      print(">>> model:")
-      print(predict_variables$predictive_model)
-      print(">>> model info:")
-      # model_info <- getModelInfo(m)
-      model_info <- get_evaluations(myBiomodModelOut)
-      print("\n>>>>> MODELO")
-      print(model_info)
-      
-      BiomodModelsProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
-                                                    new.env = stck,
-                                                    proj.name = 'current',
-                                                    selected.models = 'all',
-                                                    binary.meth = 'TSS',
-                                                    compress = FALSE,
-                                                    build.clamping.mask = FALSE)
-      
-      
-      predict_variables$predictive_map <- BiomodModelsProjection
-      
-      # pa <- read.csv(occ_file$datapath, header = input$header,
-      #                sep = input$sep, quote = input$quote)
-      # n <- runif(1, min=1, max=999999);
-      # set.seed(n)
-      # 
-      # trainIndex = createDataPartition(pa$pb, p = as.numeric(input$training_set)/100, 
-      #                                  list = FALSE,
-      #                                  times = 1) 
-      # 
-      # training = pa[ trainIndex,]
-      # predict_variables$training <- training
-      # testing= pa[-trainIndex,]
-      # predict_variables$testing <- testing
-      # train_control = trainControl(method="cv", number=10)
-      # algorithm_selected <- subset(predict_variables$algorithms, name %in% input$select_input_algorithm)$method
-      # 
-      # if (algorithm_selected == "glm") {
-      #   mod_fit1 = train(pb~.,
-      #                    data=training, trControl=train_control, method=algorithm_selected, family="binomial")
-      # }
-      # 
-      # if (algorithm_selected == "gbm") {
-      #   mod_fit1 = train(pb~.,
-      #                    data=training, trControl=train_control, method=algorithm_selected)
-      # }
-      # else {
-      #   mod_fit1 = train(pb~.,
-      #                  data=training, trControl=train_control, method=algorithm_selected, importance=TRUE)
-      # }
-      
-      
-      
-      
-      # p1=predict(mod_fit1, newdata=testing) 
-      # roc = pROC::roc(testing[,"pb"], p1)
-      # predict_variables$roc <- roc
-      # auc= pROC::auc(roc)
-      # predict_variables$auc <- roc(m)
-      
-      #   SDM ==========================================================================
-      # e1 <- ensemble(m, newdata = stck, filename = 'e1.img',
-      #                setting = list(method = 'weighted', stat = 'AUC'), overwrite = TRUE)
-      
-      # ===============================================================================
-      if (input$ensemble_switch_btn) {
-        myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
-                                               chosen.models = 'all',
-                                               em.by = 'all',
-                                               eval.metric = input$select_input_eval_method_ensemble,
-                                               eval.metric.quality.threshold = c(0.7),
-                                               models.eval.meth = input$select_input_eval_method,
-                                               prob.mean = TRUE,
-                                               prob.cv = FALSE,
-                                               prob.ci = FALSE,
-                                               prob.ci.alpha = 0.05,
-                                               prob.median = FALSE,
-                                               committee.averaging = FALSE,
-                                               prob.mean.weight = TRUE,
-                                               prob.mean.weight.decay = 'proportional' )   
-        
-        # myBiomodEM
-        print("\n>>>>>>ENSEMBLE")
-        print(get_evaluations(myBiomodEM))
-        predict_variables$ensemble_model <- myBiomodEM
-        # BiomodEnsembleProjection <- BIOMOD_Projection(modeling.output = myBiomodEM,
-        #                                         new.env = stck,
-        #                                         proj.name = 'current',
-        #                                         selected.models = 'all',
-        #                                         binary.meth = 'TSS',
-        #                                         compress = FALSE,
-        #                                         build.clamping.mask = FALSE)
-        
-        predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
-                                              EM.output = myBiomodEM)
-        
-        # predict_variables$ensemble_map <- BiomodEnsembleProjection
-      }
-      
-      
-      
-      
-      
-      # p1 = predict(stck, mod_fit1)
-      # predict_variables$predictive_map <- p1
-      end_time <- Sys.time()
-      predict_variables$execution_time = round((end_time - start_time), 2)
-      
-      showModal(modalDialog(
-        title = "Nice work!",
-        footer = NULL,
-        easyClose = TRUE
-      ))
-    }
-  }
-  
+  source("RunAlgorithm.R", local=TRUE)
   
   # =====================================================================================
   
@@ -939,7 +573,7 @@ function(input, output, session) {
                selected = 1)
   })
   
-  library(rgdal)
+
   output$show_predictors_test <- renderPlot({
     if (!is.null(input$predictors_files)) {
       datafiles <- input$predictors_files
@@ -970,97 +604,7 @@ function(input, output, session) {
     }
   })
   
-  observeEvent(input$group_pred_maps_btn, {
-    if (input$group_pred_maps_btn) {
-      secondary_variables$group_predictive_maps <- TRUE
-    }
-    else {
-      secondary_variables$group_predictive_maps <- FALSE
-    }
-  })
-  
-  output$show_predict_map <- renderPlot({
-    group_maps <- secondary_variables$group_predictive_maps
-    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$predictive_map)) {
-      # presence_absence_data <- variables$sp_download_db[, 1:3]
-      # colnames(presence_absence_data) <- c("sp", "long", "lat")
-      # runAlgorithm(input$predictors_files, presence_absence_data)
-      # print("INPUT_SELECT_INPUT_PREDICTIVE_MAPS:")
-      # print(input$select_input_predictive_maps)
-      # if (!is.null(predict_variables$predictive_map)) {
-      predictive_map <- predict_variables$predictive_map
-      models_projected_names <- predictive_map@models.projected
-      projections <- stack(predictive_map@proj@link)
-      
-      # print(input$group_pred_maps_btn)
-      if (group_maps) {
-        plot(predictive_map@proj@val)
-      }
-      else {
-        plot(predictive_map@proj@val[[input$select_input_predictive_maps]])
-      }
-      # plot(predictive_map, str.grep = input$select_input_predictive_maps)
-      # plot(projections[[input$select_input_predictive_maps]])
-    # }
-    }
-  })
-  
-  output$select_predictive_maps <- renderUI(
-    if (!is.null(predict_variables$predictive_map)) {
-      predictive_map <- predict_variables$predictive_map
-      models_projected_names <- predictive_map@models.projected
-      selectInput("select_input_predictive_maps", label = "Choose predictive map: ",
-                  choices = models_projected_names,
-                  selected = 1, multiple = FALSE)
-    }
-  )
-  
-  output$show_ensemble_map <- renderPlot({
-    if ((predict_variables$can_run_algorithm) & !is.null(predict_variables$ensemble_map)) {
-        ensemble_map <- predict_variables$ensemble_map
-        # plot(predictive_map@proj@val)
-        # plot(predict_variables$ensemble_map)
-        plot(ensemble_map@proj@val)
-        # plot(ensemble_map)
-        # plot(ensemble_map@proj@val[[input$select_input_ensemble_maps]])
-    }
-  })
-  
-  output$select_algorithm <- renderUI({
-    selectInput("select_input_algorithm", label = "Choose Algorithms: ",
-                choices = predict_variables$algorithms,
-                selected = 1, multiple = TRUE)
-  })
-  
-  output$select_eval_method <- renderUI({
-    selectInput("select_input_eval_method", label = "Choose evaluation method(s): ",
-                choices = c("ROC", "TSS", "KAPPA"),
-                selected = 1, multiple = TRUE)
-  })
-  
-  output$select_eval_method_ensemble <- renderUI({
-    selectInput("select_input_eval_method_ensemble", label = "Choose evaluation method(s): ",
-                choices = c("ROC", "TSS", "KAPPA"),
-                selected = 1, multiple = TRUE)
-  })
-  
-  output$info_training_testing <- DT::renderDataTable({
-    if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm)) {
-      df_info <- data.frame(info = c('Execution time: ', 
-                                     # 'Algorithm: ', 
-                                     'Training set: ', 
-                                     'Test set: '
-                                     # 'AUC: '
-                                     ), 
-                            value = c(as.character(predict_variables$execution_time), 
-                                      # input$select_input_algorithm, 
-                                      paste0(input$training_set, "%"), 
-                                      paste0(100 - as.numeric(input$training_set), "%")
-                                      # as.character(round(predict_variables$auc, 5))
-                                      ))
-      df_info
-    }
-  })
+  source("PredictOutputs.R", local=TRUE)
   
   output$sp_duplicated_percent <- renderInfoBox({
     duplicated_percent <- (nrow(secondary_variables$duplicated_sp) / secondary_variables$original_sp_nrow)*100
@@ -1126,107 +670,6 @@ function(input, output, session) {
     selectInput("select_data_bases", label = "Select Data base: ",
                 choices = predict_variables$data_bases,
                 selected = 1, multiple = TRUE)
-  })
-  
-  
-  
-  output$info_evaluations <- DT::renderDataTable(({
-    # if (!is.null(predict_variables$predictive_model)) {
-    #   evaluations <- get_evaluations(predict_variables$predictive_model)
-    #   df_evaluations <- data.frame(evaluations)
-    #   # df_evaluations[1, ]
-    #   df_eval_model1 <- data.frame(testing_data = df_eval[, 1],
-    #                                cutoff = df_eval[, 2],
-    #                                sensitivity = df_eval[, 3],
-    #                                specificity = df_eval[, 4])
-    #   # # colnames(df_evaluations) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-    #   df_eval_model1
-    # }
-  }))
-  
-  output$info_eval_AUC <- DT::renderDataTable({
-    print(input$select_eval_method)
-    if (!is.null(predict_variables$predictive_model)) {
-      models <- predict_variables$predictive_model
-      evaluations <- get_evaluations(models)
-      df_eval <- data.frame(evaluations)
-      ini_col <- 1
-      # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
-      df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
-      rownames(df_eval_auc) <-c(models@models.computed[1])
-      ini_col <- ini_col + 3
-      for (i in 2:length(models@models.computed)) {
-        ini_col <- ini_col + 1
-        df_eval_auc[models@models.computed[i], ] <- df_eval['ROC', ini_col:(ini_col+3)]
-        ini_col <- ini_col + 3
-      }
-      
-      if (!is.null(predict_variables$ensemble_model)) {
-        ini_col <- 1
-        ensemble_model <- predict_variables$ensemble_model
-        ensemble_evaluations <- get_evaluations(ensemble_model)
-        df_eval_ensemble <- data.frame(ensemble_evaluations)
-        for (j in 1:length(ensemble_model@em.computed)) {
-          df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
-          ini_col <- ini_col + 4
-        }
-      }
-      
-      colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-      df_eval_auc
-    }
-  })
-  
-  output$info_eval_TSS <- DT::renderDataTable({
-    if (!is.null(predict_variables$predictive_model)) {
-      models <- predict_variables$predictive_model
-      evaluations <- get_evaluations(models)
-      df_eval <- data.frame(evaluations)
-      ini_col <- 1
-      # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
-      df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
-      rownames(df_eval_tss) <-c(models@models.computed[1])
-      ini_col <- ini_col + 3
-      for (i in 2:length(models@models.computed)) {
-        ini_col <- ini_col + 1
-        df_eval_tss[models@models.computed[i], ] <- df_eval['TSS', ini_col:(ini_col+3)]
-        ini_col <- ini_col + 3
-      }
-      
-      if (!is.null(predict_variables$ensemble_model)) {
-        ensemble_model <- predict_variables$ensemble_model
-        ensemble_evaluations <- get_evaluations(ensemble_model)
-        df_eval_ensemble <- data.frame(ensemble_evaluations)
-        ini_col <- 1
-        for (j in 1:length(ensemble_model@em.computed)) {
-          df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]
-          ini_col <- ini_col + 4
-        }
-      }
-      
-      colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-      df_eval_tss
-    }
-  })
-  
-  output$species_infobox <- renderInfoBox({
-    infoBox(
-      "Species", 
-      ifelse(status$species_status, "Loaded", "Not loaded"),
-      icon = icon("list"),
-      color = ifelse(status$species_status, "green", "red"), 
-      fill = TRUE
-    )
-  })
-  
-  output$predictors_infobox <- renderInfoBox({
-    infoBox(
-      "Predictors", 
-      ifelse(status$predictors_status, "Loaded", "Not loaded"),
-      icon = icon("list"),
-      color = ifelse(status$predictors_status, "green", "red"), 
-      fill = TRUE
-    )
   })
   
   output$filter_sp_download <- renderUI({
@@ -1296,6 +739,5 @@ function(input, output, session) {
   output$show_downloaded_data <- DT::renderDataTable({
     unique(na.omit(variables$sp_download_db))
   })
-  
 }
 
