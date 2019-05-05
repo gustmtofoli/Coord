@@ -19,3 +19,7 @@ observeEvent(input$group_pred_maps_btn, {
     secondary_variables$group_predictive_maps <- FALSE
   }
 })
+
+observeEvent(input$training_set, {
+  predict_variables$can_run_algorithm <- FALSE
+})

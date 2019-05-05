@@ -165,3 +165,15 @@ output$predictors_infobox <- renderInfoBox({
     fill = TRUE
   )
 })
+
+# not using
+output$show_auc_curve <- renderPlot({
+  # if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
+  #   plot(predict_variables$roc)
+  #   text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+  # }
+  if (!is.null(predict_variables$roc)) {
+    predict_variables$roc
+    # text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+  }
+})
