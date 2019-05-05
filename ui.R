@@ -1,4 +1,5 @@
 library(shinydashboard)
+library(shinydashboardPlus)
 library(leaflet)
 library(DT)
 library(plotly)
@@ -7,28 +8,35 @@ library(highcharter)
 library(shinyWidgets)
 library(shinyjs)
 
-header <- dashboardHeader(
-  title = "COORD (testing)",
-  titleWidth = 200
+
+
+header <- dashboardHeaderPlus(
+  title = tagList(
+    span(class = "logo-lg", "COORD"),
+    img(src = "3d.svg" )),
+  # title = "COORD (testing)",
+  titleWidth = 187
 )
 
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
-    menuItem("Extract Species Data",
+    menuItem("Species Data",
+             icon = icon("th"),
              menuSubItem(
-               "Upload Species Data",
-               tabName = "coord"
+               "Upload File",
+               tabName = "not_yet"
              ),
              menuSubItem(
                "From Data Bases",
                tabName = "from_data_bases"
              )
     ),
-    menuItem("Extract Predictors",
+    menuItem("Predictors",
+             icon = icon("leaf"),
              menuSubItem(
-               "Upload Predictors",
+               "Upload Files",
                tabName = "upload_predictors"
              ),
              menuSubItem(
@@ -36,9 +44,18 @@ sidebar <- dashboardSidebar(
                tabName = "não_existe_ainda"
              )
     ),
-    menuItem("Exploratory Data Analysis", tabName = "maps"),
-    menuItem("Summary", tabName = "summary"),
-    menuItem("Predict", tabName = "predict")
+    # menuItem("Summary", tabName = "summary", icon = icon("th-list")),
+    menuItem("Exploratory Data Analysis", icon = icon("map"),
+             menuSubItem(
+               "Spatial Distribution",
+               tabName = "maps"
+             ),
+             menuSubItem(
+               "Summary",
+               tabName = "summary"
+             )),
+    menuItem("Presence/Absense", tabName = "coord", icon = icon("th-list")),
+    menuItem("Predict", tabName = "predict", icon = icon("cube"))
   )
 )
 
@@ -398,8 +415,13 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Models Predictive Map",
+          title = "Potential Distribution Map",
           status = "primary",
+          materialSwitch(inputId = "group_pred_maps_btn", label = "Group: ", status = "primary", right = FALSE),
+          conditionalPanel(
+            "!input.group_pred_maps_btn",
+            uiOutput("select_predictive_maps")
+          ),
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
         ),
         
@@ -415,11 +437,8 @@ body <- dashboardBody(
   )
 )
 
-
-
-
 shinyUI(
-  dashboardPage(
+  dashboardPagePlus(
     skin = "green",
     header,
     sidebar,

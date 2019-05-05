@@ -49,9 +49,9 @@ install.packages('spocc')
 install.packages('devtools')
 install.packages('biomod2')
 install.packages('caret')
-install.packages('spocc')
 
 install.packages('caretEnsemble')
 
 install.packages('shinyjs')
 install.packages("shinyWidgets")
+install.packages('shinydashboardPlus')
