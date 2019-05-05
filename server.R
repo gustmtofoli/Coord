@@ -87,55 +87,6 @@ function(input, output, session) {
                                                         
                                              )
   
-  
-  
-  observeEvent(input$download_from_DB, {
-    species_download <- c()
-    
-    if (input$upload_file_switch_btn) {
-      species_download <- input$selec_filter_download_sp
-    }
-    else {
-      species_download <- input$sp_name
-    }
-    
-    showModal(modalDialog(
-      title = "Searching Data",
-      footer = NULL,
-      easyClose = FALSE,
-      paste0("Species: ", species_download),
-      br(),
-      paste0("Data base(s): ", input$select_data_bases)
-
-    ))
-    
-    print("\n\n========================")
-    print(input$select_data_bases)
-    
-    
-    data_from_DB <- occ(species_download, from = input$select_data_bases)
-    df_data <- occ2df(data_from_DB)
-    colnames(df_data) <- c("sp", "lon", "lat", "data_base")
-    print(df_data)
-    if (!is.null(df_data) & nrow(df_data) > 0) {
-      variables$sp_download_db <- df_data[, 1:4]
-      status$species_status <- TRUE
-      showModal(modalDialog(
-        title = "Nice work!!",
-        footer = NULL,
-        easyClose = TRUE
-      ))
-    }
-    else {
-      showModal(modalDialog(
-        title = "Oh no :(",
-        footer = NULL,
-        easyClose = TRUE,
-        paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
-      ))
-    }
-  })
-  
   observeEvent(input$predictors_files, {
     predict_variables$can_run_algorithm <- FALSE
     status$predictors_status <- TRUE
@@ -149,21 +100,6 @@ function(input, output, session) {
     predict_variables$can_run_algorithm <- FALSE
   })
   
-  # ========== SERVICES ===============================================================
-  
-  source("PredictService.R", local=TRUE)
-  source("PresenceAbsenceService.R", local=TRUE)
-  
-  # ===================================================================================
-  
-  # ========== OUTPUTS ===============================================================
-  
-  source("PredictOutputs.R", local=TRUE)
-  source("PresenceAbsenceOutputs.R", local=TRUE)
-  
-  # ===================================================================================
-  
-  
   # ========== FUNCTIONS ===============================================================
   
   source("SpeciesFreq.R", local=TRUE)
@@ -172,16 +108,22 @@ function(input, output, session) {
   source("RunAlgorithm.R", local=TRUE)
   
   # ===================================================================================
-
- output$download_data_from_db_btn <- downloadHandler(
-    filename = function() { "downloaded_species_occ.csv" },
-    content = function(fname) {
-      if (!is.null(variables$sp_download_db)) {
-        write.csv(unique(na.omit(variables$sp_download_db)), fname)
-      }
-    }
-  )
   
+  # ========== SERVICES ===============================================================
+  
+  source("PredictService.R", local=TRUE)
+  source("PresenceAbsenceService.R", local=TRUE)
+  source("SpeciesDataFromDataBasesService.R", local=TRUE)
+  
+  # ===================================================================================
+  
+  # ========== OUTPUTS ===============================================================
+  
+  source("PredictOutputs.R", local=TRUE)
+  source("PresenceAbsenceOutputs.R", local=TRUE)
+  source("SpeciesDataFromDataBasesOutputs.R", local=TRUE)
+  
+  # ===================================================================================
 
   output$download_species_freq <- downloadHandler(
     filename = function(){"species_freq.csv"},
@@ -365,37 +307,6 @@ function(input, output, session) {
                       selected = species_name)
   })
   
-  clean_all_filter <- observeEvent(input$clean_all_filter_btn, {
-    sp_download_db <- variables$sp_download_db
-    species_name = unique(sp_download_db$sp)
-    updateSelectInput(session, "selec_filter_sp_map", label = h4("Select species"), 
-                      choices = species_name, 
-                      selected = 1)
-  })
-  
-  observeEvent(input$selet_all_download_sp_btn, {
-    if (!is.null(input$file_species_download)) {
-      uploaded_file <- input$file_species_download
-      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
-                                 sep = ",")
-      species_name = unique(uploaded_data$sp)
-      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
-                        choices = species_name, 
-                        selected = species_name)
-    }
-  })
-  
-  observeEvent(input$clean_download_sp_btn, {
-    if (!is.null(input$file_species_download)) {
-      uploaded_file <- input$file_species_download
-      uploaded_data <- read.csv(uploaded_file$datapath, header = TRUE,
-                                sep = ",")
-      species_name = unique(uploaded_data$sp)
-      updateSelectInput(session, "selec_filter_download_sp", label = h4("Select species"), 
-                        choices = species_name, 
-                        selected = 1)
-    }
-  })
   
   output$sp_occ_scatter_plot <- renderPlotly({
     if (!is.null(input$file2) & !is.null(input$file1)) {
@@ -608,78 +519,5 @@ function(input, output, session) {
     )
   })
   
-  output$select_DB <- renderUI({
-    selectInput("select_data_bases", label = "Select Data base: ",
-                choices = predict_variables$data_bases,
-                selected = 1, multiple = TRUE)
-  })
-  
-  output$filter_sp_download <- renderUI({
-    if (!is.null(input$file_species_download)) {
-      file_species_download <- input$file_species_download
-      species_download <- grid_read <- read.csv(file_species_download$datapath, header = input$header,
-                                      sep = input$sep, quote = input$quote)
-      species_name <- unique(species_download$sp)
-      selectInput("selec_filter_download_sp", label = h5("Select species"),
-                  choices = species_name,
-                  selected = 1, multiple = TRUE)
-    }
-  })
-  
-  output$sp_download_na <- renderInfoBox({
-    downloaded_species <- variables$sp_download_db
-    total_nrow <- nrow(downloaded_species)
-    number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
-    infoBox(
-      "Number of empty records",
-      paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
-      paste0(number_of_na, " of ", nrow(downloaded_species)),
-      icon = icon("list"),
-      color = "light-blue", 
-      fill = TRUE
-    )
-  })
-  
-  output$sp_download_count <- renderInfoBox({
-    downloaded_species <- variables$sp_download_db
-    number_of_species <- length(unique(downloaded_species$sp))
-    infoBox(
-      "Number of Species",
-      paste0(number_of_species),
-      icon = icon("list"),
-      color = "light-blue", 
-      fill = TRUE
-    )
-  })
-  
-  output$sp_download_duplicated <- renderInfoBox({
-    downloaded_species <- variables$sp_download_db
-    downloaded_species.na.omit <- na.omit(downloaded_species)
-    n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species.na.omit), ])
-    infoBox(
-      "Duplicated occurences",
-      paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
-      paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
-      icon = icon("list"),
-      color = "light-blue", 
-      fill = TRUE
-    )
-  })
-  
-  output$sp_download_db <- renderInfoBox({
-    downloaded_species <- variables$sp_download_db
-    n_data_bases <- length(unique(downloaded_species$data_base))
-    infoBox(
-      "Data Bases with records",
-      paste0(n_data_bases),
-      icon = icon("list"),
-      color = "light-blue",
-      fill = TRUE
-    )
-  })
-  
-  output$show_downloaded_data <- DT::renderDataTable({
-    unique(na.omit(variables$sp_download_db))
-  })
 }
 
