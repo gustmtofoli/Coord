@@ -67,7 +67,8 @@ output$sp_download_db <- renderInfoBox({
     paste0(n_data_bases),
     icon = icon("list"),
     color = "light-blue",
-    fill = TRUE
+    fill = TRUE,
+    actionButton("see_db_with_records", "More")
   )
 })
 

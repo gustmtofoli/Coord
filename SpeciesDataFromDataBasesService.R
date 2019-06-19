@@ -11,15 +11,16 @@ observeEvent(input$download_from_DB, {
   showModal(modalDialog(
     title = "Searching Data",
     footer = NULL,
-    easyClose = FALSE,
-    paste0("Species: ", species_download),
-    br(),
-    paste0("Data base(s): ", input$select_data_bases)
+    easyClose = FALSE
+    # paste0("Species: ", species_download),
+    # br(),
+    # paste0("Data base(s): ", input$select_data_bases)
     
   ))
   
   print("\n\n========================")
   print(input$select_data_bases)
+  print(species_download)
   
   
   data_from_DB <- occ(species_download, from = input$select_data_bases)

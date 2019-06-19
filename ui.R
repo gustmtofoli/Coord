@@ -140,11 +140,17 @@ body <- dashboardBody(
           materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file: ", status = "primary", right = FALSE)
         ),
         
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Instructions"
+        ),
+        
         conditionalPanel(
           "input.upload_file_switch_btn",
           box(
             width = 12,
-            collapsible = TRUE,
+            collapsible = FALSE,
             # materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file with specie(s) name:", status = "primary", right = FALSE),
             # tags$hr(),
             fileInput('file_species_download', "Upload species file:",
@@ -172,7 +178,7 @@ body <- dashboardBody(
           "!input.upload_file_switch_btn",
           box(
             width = 12,
-            collapsible = TRUE,
+            collapsible = FALSE,
             textInput("sp_name", "Type species name: ")
           )
         ),
@@ -180,7 +186,7 @@ body <- dashboardBody(
        
         box(
           width = 12,
-          collapsible = TRUE,
+          collapsible = FALSE,
           # title = "Download Species Data", 
           status = "primary",
          
