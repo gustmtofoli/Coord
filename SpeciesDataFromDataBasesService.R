@@ -1,55 +1,57 @@
 observeEvent(input$download_from_DB, {
-  species_download <- c()
-  
-  if (input$upload_file_switch_btn) {
-    species_download <- input$selec_filter_download_sp
-  }
-  else {
-    species_download <- input$sp_name
-  }
-  
-  showModal(modalDialog(
-    title = "Searching Data",
-    footer = NULL,
-    easyClose = FALSE
-    # paste0("Species: ", species_download),
-    # br(),
-    # paste0("Data base(s): ", input$select_data_bases)
+  if (length(input$select_data_bases) > 0) {
+    species_download <- c()
     
-  ))
-  
-  print("\n\n========================")
-  print(input$select_data_bases)
-  print(species_download)
-  
-  
-  data_from_DB <- occ(species_download, from = input$select_data_bases)
-  df_data <- occ2df(data_from_DB)
-  colnames(df_data) <- c("sp", "lon", "lat", "data_base")
-  print(df_data)
-  if (!is.null(df_data) & nrow(df_data) > 0) {
-    variables$sp_download_db <- df_data[, 1:4]
-    status$species_status <- TRUE
+    if (input$upload_file_switch_btn) {
+      species_download <- input$selec_filter_download_sp
+    }
+    else {
+      species_download <- input$sp_name
+    }
+    
     showModal(modalDialog(
-      title = "Nice work!!",
+      title = "Searching Data",
       footer = NULL,
-      easyClose = TRUE
+      easyClose = FALSE
+      # paste0("Species: ", species_download),
+      # br(),
+      # paste0("Data base(s): ", input$select_data_bases)
+      
     ))
-  }
-  else {
-    showModal(modalDialog(
-      title = "Oh no :(",
-      footer = NULL,
-      easyClose = TRUE,
-      paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
-    ))
+    
+    print("\n\n========================")
+    print(input$select_data_bases)
+    print(species_download)
+    
+    
+    data_from_DB <- occ(species_download, from = input$select_data_bases)
+    df_data <- occ2df(data_from_DB)
+    colnames(df_data) <- c("sp", "lon", "lat", "data_base")
+    print(df_data)
+    if (!is.null(df_data) & nrow(df_data) > 0) {
+      variables$sp_download_db <- df_data[, 1:4]
+      status$species_status <- TRUE
+      showModal(modalDialog(
+        title = "Nice work!!",
+        footer = NULL,
+        easyClose = TRUE
+      ))
+    }
+    else {
+      showModal(modalDialog(
+        title = "Oh no :(",
+        footer = NULL,
+        easyClose = TRUE,
+        paste0("No records found in ", input$select_data_bases, " for ", input$sp_name)
+      ))
+    }
   }
 })
 
 observeEvent(input$see_db_with_records, {
   downloaded_species <- variables$sp_download_db
   data_bases = unique(downloaded_species$data_base)
-  df <- data.frame(data bases = data_bases)
+  df <- data.frame(data_bases = data_bases)
   print(unique(downloaded_species$data_base))
   print(df)
   showModal(modalDialog(
