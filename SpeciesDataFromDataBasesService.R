@@ -46,6 +46,20 @@ observeEvent(input$download_from_DB, {
   }
 })
 
+observeEvent(input$see_db_with_records, {
+  downloaded_species <- variables$sp_download_db
+  data_bases = unique(downloaded_species$data_base)
+  df <- data.frame(db = data_bases)
+  print(unique(downloaded_species$data_base))
+  print(df)
+  showModal(modalDialog(
+    title = "Data Bases with records:",
+    footer = NULL,
+    easyClose = TRUE,
+    renderDataTable(df, options = list(lengthChange = FALSE))
+  ))
+})
+
 observeEvent(input$selet_all_download_sp_btn, {
   if (!is.null(input$file_species_download)) {
     uploaded_file <- input$file_species_download

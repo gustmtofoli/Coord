@@ -140,10 +140,17 @@ body <- dashboardBody(
           materialSwitch(inputId = "upload_file_switch_btn", label = "Upload file: ", status = "primary", right = FALSE)
         ),
         
-        box(
-          width = 12,
-          collapsible = TRUE,
-          title = "Instructions"
+        conditionalPanel(
+          "input.upload_file_switch_btn",
+          box(
+            width = 12,
+            collapsible = TRUE,
+            title = "Instructions",
+            status = "primary", 
+            solidHeader = TRUE,
+            "Your CSV file must contain a column named 'SP'.",
+            downloadButton("download_sample_sp", "Download Sample")
+          )
         ),
         
         conditionalPanel(
@@ -179,7 +186,8 @@ body <- dashboardBody(
           box(
             width = 12,
             collapsible = FALSE,
-            textInput("sp_name", "Type species name: ")
+            textInput("sp_name", "Type species name: "),
+            "Ex.: Buceros rhinoceros, Zungaro zungaro"
           )
         ),
         
