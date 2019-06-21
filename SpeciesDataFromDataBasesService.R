@@ -49,7 +49,21 @@ observeEvent(input$download_from_DB, {
 observeEvent(input$see_db_with_records, {
   downloaded_species <- variables$sp_download_db
   data_bases = unique(downloaded_species$data_base)
-  df <- data.frame(db = data_bases)
+  df <- data.frame(data bases = data_bases)
+  print(unique(downloaded_species$data_base))
+  print(df)
+  showModal(modalDialog(
+    title = "Data Bases with records:",
+    footer = NULL,
+    easyClose = TRUE,
+    renderDataTable(df, options = list(lengthChange = FALSE))
+  ))
+})
+
+observeEvent(input$see_downloaded_species, {
+  downloaded_species <- variables$sp_download_db
+  species = unique(downloaded_species$sp)
+  df <- data.frame(species = species)
   print(unique(downloaded_species$data_base))
   print(df)
   showModal(modalDialog(

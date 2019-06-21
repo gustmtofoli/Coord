@@ -41,7 +41,8 @@ output$sp_download_count <- renderInfoBox({
     paste0(number_of_species),
     icon = icon("list"),
     color = "light-blue", 
-    fill = TRUE
+    fill = TRUE,
+    actionButton("see_downloaded_species", "More")
   )
 })
 
