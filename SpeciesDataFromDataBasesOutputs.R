@@ -7,6 +7,16 @@ output$download_data_from_db_btn <- downloadHandler(
   }
 )
 
+output$download_sample_sp <- downloadHandler(
+  filename <- function() {
+    paste("sample_download_species", "csv", sep=".")
+  },
+  content <- function(file) {
+    file.copy("samples/sample_download_species.csv", file)
+  },
+  contentType = "application/csv"
+)
+
 output$filter_sp_download <- renderUI({
   if (!is.null(input$file_species_download)) {
     file_species_download <- input$file_species_download

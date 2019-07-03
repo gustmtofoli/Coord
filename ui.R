@@ -187,7 +187,7 @@ body <- dashboardBody(
             width = 12,
             collapsible = FALSE,
             textInput("sp_name", "Type species name: "),
-            "Ex.: Buceros rhinoceros, Zungaro zungaro"
+            "Ex.: Buceros rhinoceros"
           )
         ),
         
