@@ -24,6 +24,7 @@ function(input, output, session) {
 
   variables <- reactiveValues(grid_read = NULL, 
                               sp_read = NULL, 
+                              species_file = NULL,
                               sp_download_db = NULL,
                               sp_download_db_processed = NULL,
                               sp_without_outliers = NULL, 
@@ -94,6 +95,7 @@ function(input, output, session) {
   
   # ========== SERVICES ===============================================================
   
+  source("UploadSpeciesService.R", local=TRUE)
   source("PredictService.R", local=TRUE)
   source("PresenceAbsenceService.R", local=TRUE)
   source("SpeciesDataFromDataBasesService.R", local=TRUE)
@@ -104,6 +106,7 @@ function(input, output, session) {
   
   # ========== OUTPUTS ===============================================================
   
+  source("UploadSpeciesOutputs.R", local=TRUE)
   source("PredictOutputs.R", local=TRUE)
   source("PresenceAbsenceOutputs.R", local=TRUE)
   source("SpeciesDataFromDataBasesOutputs.R", local=TRUE)

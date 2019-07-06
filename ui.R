@@ -26,7 +26,7 @@ sidebar <- dashboardSidebar(
              icon = icon("th"),
              menuSubItem(
                "Upload File",
-               tabName = "not_yet"
+               tabName = "upload_species_file"
              ),
              menuSubItem(
                "From Data Bases",
@@ -63,7 +63,47 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   useShinyjs(),
   tabItems(
-    tabItem("coord",
+    tabItem(
+      "upload_species_file",
+      fluidRow(
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Upload", 
+          status = "primary",
+          fileInput('species_file', 'Upload species file',
+                    accept = c(
+                      'text/csv',
+                      'text/comma-separated-values',
+                      'text/tab-separated-values',
+                      'text/plain',
+                      '.csv',
+                      '.tsv'
+                    )
+          ),
+          tags$hr(),
+          checkboxInput('header', 'Header', TRUE),
+          radioButtons('sep', 'Separator',
+                       c(Comma=',',
+                         Semicolon=';',
+                         Tab='\t'),
+                       ','),
+          tags$hr()
+        ),
+        
+        box(
+          width = 12,
+          collapsible = TRUE,
+          title = "Species File", 
+          # status = "success",
+          dataTableOutput("species_file_table")
+        )
+      )
+    ),
+    
+    
+    tabItem(
+      "coord",
       fluidRow(
         box(
           width = 4,

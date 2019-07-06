@@ -6,7 +6,7 @@ output$grid <- DT::renderDataTable({
 
 output$sp <- DT::renderDataTable({
   if (!is.null(input$file2) & !is.null(input$file1)) {
-    variables$sp_read
+    variables$sp_read 
   }
 })
 
