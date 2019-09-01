@@ -13,7 +13,8 @@ observeEvent(input$download_from_DB, {
       showModal(modalDialog(
         title = "Searching Data",
         footer = NULL,
-        easyClose = FALSE
+        easyClose = FALSE,
+        loadingState()
   
               
         
