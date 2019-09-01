@@ -95,12 +95,12 @@ body <- dashboardBody(
   tabItems(
     tabItem(
       "home",
-      box(
-        width = 12,
-        collapsible = FALSE,
-        solidHeader = TRUE,
-        title = "Welcome to COORD!",
-        status = "primary"
+      fluidRow(
+        infoBox("Download Species Data", "Integration with GBIF and +9 databases", width = 6, icon = icon("th"), fill = TRUE),
+        infoBox("Download Predictors Data", "Integration with Wordclim", width = 6, icon = icon("leaf"), fill = TRUE),
+        infoBox("Explore the data", "See the distribution of your data with interactive maps and charts", width = 6, icon = icon("map"), fill = TRUE),
+        infoBox("Presence and Absence", "You can generate the presence/absence file from yout own data", width = 6, icon = icon("th-list"), fill = TRUE),
+        infoBox("Predict", "Run machine learning algorithms, make an ensemble model and generate the predictive maps.", width = 6, icon = icon("cube"), fill = TRUE)
       )
     ),
     tabItem(
