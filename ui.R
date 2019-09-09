@@ -11,17 +11,47 @@ library(shinyjs)
 
 
 header <- dashboardHeaderPlus(
+  
   title = tagList(
     span(class = "logo-lg", "COORD"),
     img(src = "3d.svg" )),
   # title = "COORD (testing)",
-  titleWidth = 187
+  titleWidth = 187,
+  # dropdownMenu(
+  #   type = "tasks",
+  #   badgeStatus = "danger",
+  #   taskItem(value = 20, color = "aqua", "Refactor code"),
+  #   taskItem(value = 40, color = "green", "Design new layout"),
+  #   taskItem(value = 60, color = "yellow", "Another task"),
+  #   taskItem(value = 80, color = "red", "Write documentation")
+  # ),
+  # dropdownBlock(
+  #   id = "mydropdown",
+  #   title = "Dropdown 1",
+  #   icon = icon("sliders"),
+  #   sliderInput(
+  #     inputId = "n",
+  #     label = "Number of observations",
+  #     min = 10, max = 100, value = 30
+  #   ),
+  #   prettyToggle(
+  #     inputId = "na",
+  #     label_on = "NAs keeped",
+  #     label_off = "NAs removed",
+  #     icon_on = icon("check"),
+  #     icon_off = icon("remove")
+  #   )
+  # )
+  enable_rightsidebar = TRUE,
+  rightSidebarIcon = "user"
+  
 )
 
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
     # menuItem("Inputs from DBs", tabName = "input"),
+    menuItem("Home", tabName = "home", icon = icon("home")),
     menuItem("Species Data",
              icon = icon("th"),
              menuSubItem(
@@ -64,12 +94,22 @@ body <- dashboardBody(
   useShinyjs(),
   tabItems(
     tabItem(
+      "home",
+      fluidRow(
+        infoBox("Download Species Data", "Integration with GBIF and +9 databases", width = 6, icon = icon("th"), fill = TRUE),
+        infoBox("Download Predictors Data", "Integration with Wordclim", width = 6, icon = icon("leaf"), fill = TRUE),
+        infoBox("Explore the data", "See the distribution of your data with interactive maps and charts", width = 6, icon = icon("map"), fill = TRUE),
+        infoBox("Presence and Absence", "You can generate the presence/absence file from yout own data", width = 6, icon = icon("th-list"), fill = TRUE),
+        infoBox("Predict", "Run machine learning algorithms, make an ensemble model and generate the predictive maps.", width = 6, icon = icon("cube"), fill = TRUE)
+      )
+    ),
+    tabItem(
       "upload_species_file",
       fluidRow(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Upload", 
+          title = "Upload",
           status = "primary",
           fileInput('species_file', 'Upload species file',
                     accept = c(
@@ -94,7 +134,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Species File", 
+          title = "Species File",
           # status = "success",
           dataTableOutput("species_file_table")
         )
@@ -108,7 +148,7 @@ body <- dashboardBody(
         box(
           width = 4,
           collapsible = TRUE,
-          title = "Upload", 
+          title = "Upload",
           status = "primary",
           fileInput('file1', 'Choose grid file to upload',
                     accept = c(
@@ -144,7 +184,7 @@ body <- dashboardBody(
         box(
           width = 4,
           collapsible = TRUE,
-          title = "Grid file", 
+          title = "Grid file",
           status = "success",
           dataTableOutput("grid")
         ),
@@ -152,7 +192,7 @@ body <- dashboardBody(
         box(
           width = 4,
           collapsible = TRUE,
-          title = "Species presence File", 
+          title = "Species presence File",
           status = "info",
           dataTableOutput("sp")
         )
@@ -162,7 +202,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Presence and absence", 
+          title = "Presence and absence",
           status = "warning",
           DT::dataTableOutput("result"),
           downloadButton("download_results", "Download")
@@ -186,7 +226,7 @@ body <- dashboardBody(
             width = 12,
             collapsible = TRUE,
             title = "Instructions",
-            status = "primary", 
+            status = "primary",
             solidHeader = TRUE,
             "Your CSV file must contain a column named 'SP'.",
             downloadButton("download_sample_sp", "Download Sample")
@@ -213,10 +253,10 @@ body <- dashboardBody(
             tags$hr(),
             # conditionalPanel(
             #   "input.file_species_download",
-              uiOutput("filter_sp_download"),
-              actionButton("selet_all_download_sp_btn", "Select all"),
-              actionButton("clean_download_sp_btn", "Clean")
-              
+            uiOutput("filter_sp_download"),
+            actionButton("selet_all_download_sp_btn", "Select all"),
+            actionButton("clean_download_sp_btn", "Clean")
+            
             # )
           )
         ),
@@ -231,13 +271,13 @@ body <- dashboardBody(
           )
         ),
         
-       
+        
         box(
           width = 12,
           collapsible = FALSE,
-          # title = "Download Species Data", 
+          # title = "Download Species Data",
           status = "primary",
-         
+          
           # tags$hr(),
           uiOutput("select_DB"),
           tags$hr(),
@@ -249,7 +289,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Downloaded Data", 
+          title = "Downloaded Data",
           status = "primary",
           DT::dataTableOutput("show_downloaded_data") %>% withSpinner(color="#0dc5c1"),
           downloadButton("download_data_from_db_btn", "Download")
@@ -283,7 +323,7 @@ body <- dashboardBody(
         )
       )
     ),
-      
+    
     tabItem(
       "summary",
       fluidRow(
@@ -358,7 +398,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Sp Coordinates", 
+          title = "Sp Coordinates",
           status = "warning",
           plotlyOutput("scatter_plot") %>% withSpinner(color="#0dc5c1")
         ),
@@ -366,7 +406,7 @@ body <- dashboardBody(
         box(
           width = 12,
           collapsible = TRUE,
-          title = "Sp Frequency", 
+          title = "Sp Frequency",
           status = "warning",
           plotlyOutput("sp_freq_plot") %>% withSpinner(color="#0dc5c1")
         )
@@ -375,7 +415,7 @@ body <- dashboardBody(
       fluidRow(
         box(
           collapsible = TRUE,
-          title = "Species location", 
+          title = "Species location",
           status = "success",
           width = 6,
           leafletOutput("map_sp", height="650") %>% withSpinner(color="#0dc5c1")
@@ -383,7 +423,7 @@ body <- dashboardBody(
         
         box(
           collapsible = TRUE,
-          title = "Species location - clustered", 
+          title = "Species location - clustered",
           status = "info",
           width =6,
           leafletOutput("map_sp_clustered", height="650") %>% withSpinner(color="#0dc5c1")
@@ -391,7 +431,7 @@ body <- dashboardBody(
         
         box(
           collapsible = TRUE,
-          title = "Centroids location", 
+          title = "Centroids location",
           status = "info",
           width = 6,
           leafletOutput("map_grid", height="650") %>% withSpinner(color="#0dc5c1")
@@ -400,11 +440,11 @@ body <- dashboardBody(
         box(
           width = 6,
           collapsible = TRUE,
-          title = "Occurences", 
+          title = "Occurences",
           status = "warning",
           leafletOutput("map_grid_occ", height="650") %>% withSpinner(color="#0dc5c1")
         )
-       
+        
       )
       
     ),
@@ -415,33 +455,33 @@ body <- dashboardBody(
         infoBoxOutput("species_infobox"),
         infoBoxOutput("predictors_infobox")
       ),
-
+      
       fluidRow (
-            box(
-              width = 6,
-              collapsible = TRUE,
-              title = "Algorithm", 
-              status = "primary",
-              uiOutput("select_algorithm"),
-              uiOutput("select_eval_method"),
-              textInput("training_set", "Training Set (%): "),
-              textInput("number_of_executions", "Number of executions: "),
-              tags$hr(),
-              materialSwitch(inputId = "ensemble_switch_btn", label = "Ensemble: ", status = "primary", right = FALSE),
-              conditionalPanel(
-                "input.ensemble_switch_btn",
-                uiOutput("select_eval_method_ensemble")
-              ),
-              actionButton("run_algorithm_btn", "Run", width = "100%")
-            ),
-            
-            box(
-              width = 6,
-              collapsible = TRUE,
-              title = "Execution Info",
-              status = "primary",
-              DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
-            )
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Algorithm",
+          status = "primary",
+          uiOutput("select_algorithm"),
+          uiOutput("select_eval_method"),
+          textInput("training_set", "Training Set (%): "),
+          textInput("number_of_executions", "Number of executions: "),
+          tags$hr(),
+          materialSwitch(inputId = "ensemble_switch_btn", label = "Ensemble: ", status = "primary", right = FALSE),
+          conditionalPanel(
+            "input.ensemble_switch_btn",
+            uiOutput("select_eval_method_ensemble")
+          ),
+          actionButton("run_algorithm_btn", "Run", width = "100%")
+        ),
+        
+        box(
+          width = 6,
+          collapsible = TRUE,
+          title = "Execution Info",
+          status = "primary",
+          DT::dataTableOutput("info_training_testing") %>% withSpinner(color="#0dc5c1")
+        )
       ),
       
       fluidRow(
