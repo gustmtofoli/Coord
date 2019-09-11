@@ -16,7 +16,7 @@ header <- dashboardHeaderPlus(
     span(class = "logo-lg", "COORD"),
     img(src = "3d.svg" )),
   # title = "COORD (testing)",
-  titleWidth = 187,
+  titleWidth = 187
   # dropdownMenu(
   #   type = "tasks",
   #   badgeStatus = "danger",
@@ -42,8 +42,8 @@ header <- dashboardHeaderPlus(
   #     icon_off = icon("remove")
   #   )
   # )
-  enable_rightsidebar = TRUE,
-  rightSidebarIcon = "user"
+  # enable_rightsidebar = TRUE,
+  # rightSidebarIcon = "user"
   
 )
 
@@ -516,7 +516,8 @@ body <- dashboardBody(
             "!input.group_pred_maps_btn",
             uiOutput("select_predictive_maps")
           ),
-          plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1")
+          plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1"),
+          downloadButton("download_distribution_map", "Download")
         ),
         
         box(
