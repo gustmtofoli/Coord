@@ -166,14 +166,22 @@ output$predictors_infobox <- renderInfoBox({
   )
 })
 
-# not using
-output$show_auc_curve <- renderPlot({
-  # if (!is.null(predict_variables$roc) & !is.null(predict_variables$auc)) {
-  #   plot(predict_variables$roc)
-  #   text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
-  # }
-  if (!is.null(predict_variables$roc)) {
-    predict_variables$roc
-    # text(0.5,0.5,paste("AUC = ",format(predict_variables$auc, digits=5, scientific=FALSE)))
+output$download_distribution_map <- downloadHandler(
+  filename <- function() {
+    paste(str(input$select_input_predictive_maps), ".tif")
+  },
+  content = function(file) {
+    predictive_map <- predict_variables$predictive_map
+    writeRaster(predictive_map@proj@val[[input$select_input_predictive_maps]], filename=file, format="GTiff", overwrite=TRUE)
   }
-})
+)
+
+# output$download_ensemble_map <- downloadHandler(
+#   filename <- function() {
+#     paste(str(input$select_input_predictive_maps), ".tif")
+#   },
+#   content = function(file) {
+#     predictive_map <- predict_variables$predictive_map
+#     writeRaster(predictive_map@proj@val[[input$select_input_predictive_maps]], filename=file, format="GTiff", overwrite=TRUE)
+#   }
+# )

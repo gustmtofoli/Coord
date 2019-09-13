@@ -517,7 +517,10 @@ body <- dashboardBody(
             uiOutput("select_predictive_maps")
           ),
           plotOutput("show_predict_map") %>% withSpinner(color="#0dc5c1"),
-          downloadButton("download_distribution_map", "Download")
+          conditionalPanel(
+            "!input.group_pred_maps_btn",
+            downloadButton("download_distribution_map", "Download")
+          )
         ),
         
         box(
@@ -525,7 +528,7 @@ body <- dashboardBody(
           collapsible = TRUE,
           title = "Ensemble Map",
           status = "primary",
-          plotOutput("show_ensemble_map") %>% withSpinner(color="#0dc5c1")
+          plotOutput("show_ensemble_map") %>% withSpinner(color="#0dc5c1"),
         )
       )
     )

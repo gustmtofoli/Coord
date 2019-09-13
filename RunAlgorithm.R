@@ -2,10 +2,11 @@ runAlgorithm = function(predictors, pres_abs) {
   if (predict_variables$can_run_algorithm) {
     start_time <- Sys.time()
     showModal(modalDialog(
-      title = "Hey",
+      title = "Running",
       footer = NULL,
       easyClose = FALSE,
-      "This may take some time... coffee?"
+      "This may take some time... coffee?",
+      loadingState()
     ))
     
     datafiles <- predictors
@@ -72,9 +73,9 @@ runAlgorithm = function(predictors, pres_abs) {
     # ================================================================================
     
     # === BIOMOD =====================================================================
-    print(">>>>>>>>>>")
-    print(input$select_input_eval_method)
-    print(">>>>>>>>>>")
+    # print(">>>>>>>>>>")
+    # print(input$select_input_eval_method)
+    # print(">>>>>>>>>>")
     myBiomodOption <- BIOMOD_ModelingOptions()
     myBiomodModelOut <- BIOMOD_Modeling(
       myBiomodData,
@@ -95,13 +96,13 @@ runAlgorithm = function(predictors, pres_abs) {
     
     predict_variables$predictive_model <- myBiomodModelOut
     
-    print(">>> model:")
-    print(predict_variables$predictive_model)
-    print(">>> model info:")
+    # print(">>> model:")
+    # print(predict_variables$predictive_model)
+    # print(">>> model info:")
     # model_info <- getModelInfo(m)
     model_info <- get_evaluations(myBiomodModelOut)
-    print("\n>>>>> MODELO")
-    print(model_info)
+    # print("\n>>>>> MODELO")
+    # print(model_info)
     
     BiomodModelsProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
                                                 new.env = stck,
@@ -136,8 +137,8 @@ runAlgorithm = function(predictors, pres_abs) {
                                              prob.mean.weight.decay = 'proportional' )   
       
       # myBiomodEM
-      print("\n>>>>>>ENSEMBLE")
-      print(get_evaluations(myBiomodEM))
+      # print("\n>>>>>>ENSEMBLE")
+      # print(get_evaluations(myBiomodEM))
       predict_variables$ensemble_model <- myBiomodEM
       predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
                                                                     EM.output = myBiomodEM)
