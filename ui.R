@@ -529,6 +529,8 @@ body <- dashboardBody(
           title = "Ensemble Map",
           status = "primary",
           plotOutput("show_ensemble_map") %>% withSpinner(color="#0dc5c1"),
+          downloadButton("download_ensemble_map", "Download ensemble default map"),
+          downloadButton("download_ensemble_weighted_map", "Download ensemble weighted map")
         )
       )
     )

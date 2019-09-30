@@ -1,26 +1,16 @@
 output$show_predict_map <- renderPlot({
   group_maps <- secondary_variables$group_predictive_maps
   if (!is.null(input$predictors_files) & (predict_variables$can_run_algorithm) & !is.null(predict_variables$predictive_map)) {
-    # presence_absence_data <- variables$sp_download_db[, 1:3]
-    # colnames(presence_absence_data) <- c("sp", "long", "lat")
-    # runAlgorithm(input$predictors_files, presence_absence_data)
-    # print("INPUT_SELECT_INPUT_PREDICTIVE_MAPS:")
-    # print(input$select_input_predictive_maps)
-    # if (!is.null(predict_variables$predictive_map)) {
     predictive_map <- predict_variables$predictive_map
     models_projected_names <- predictive_map@models.projected
     projections <- stack(predictive_map@proj@link)
-    
-    # print(input$group_pred_maps_btn)
+
     if (group_maps) {
       plot(predictive_map@proj@val)
     }
     else {
       plot(predictive_map@proj@val[[input$select_input_predictive_maps]])
     }
-    # plot(predictive_map, str.grep = input$select_input_predictive_maps)
-    # plot(projections[[input$select_input_predictive_maps]])
-    # }
   }
 })
 
@@ -37,11 +27,7 @@ output$select_predictive_maps <- renderUI(
 output$show_ensemble_map <- renderPlot({
   if ((predict_variables$can_run_algorithm) & !is.null(predict_variables$ensemble_map)) {
     ensemble_map <- predict_variables$ensemble_map
-    # plot(predictive_map@proj@val)
-    # plot(predict_variables$ensemble_map)
     plot(ensemble_map@proj@val)
-    # plot(ensemble_map)
-    # plot(ensemble_map@proj@val[[input$select_input_ensemble_maps]])
   }
 })
 
@@ -72,10 +58,8 @@ output$info_training_testing <- DT::renderDataTable({
                                    # 'AUC: '
     ), 
     value = c(as.character(predict_variables$execution_time), 
-              # input$select_input_algorithm, 
               paste0(input$training_set, "%"), 
               paste0(100 - as.numeric(input$training_set), "%")
-              # as.character(round(predict_variables$auc, 5))
     ))
     df_info
   }
@@ -88,7 +72,6 @@ output$info_eval_AUC <- DT::renderDataTable({
     evaluations <- get_evaluations(models)
     df_eval <- data.frame(evaluations)
     ini_col <- 1
-    # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
     df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
     rownames(df_eval_auc) <-c(models@models.computed[1])
     ini_col <- ini_col + 3
@@ -120,7 +103,6 @@ output$info_eval_TSS <- DT::renderDataTable({
     evaluations <- get_evaluations(models)
     df_eval <- data.frame(evaluations)
     ini_col <- 1
-    # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
     df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
     rownames(df_eval_tss) <-c(models@models.computed[1])
     ini_col <- ini_col + 3
@@ -140,8 +122,7 @@ output$info_eval_TSS <- DT::renderDataTable({
         ini_col <- ini_col + 4
       }
     }
-    
-    colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+    colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "specificity")
     df_eval_tss
   }
 })
@@ -176,12 +157,24 @@ output$download_distribution_map <- downloadHandler(
   }
 )
 
-# output$download_ensemble_map <- downloadHandler(
-#   filename <- function() {
-#     paste(str(input$select_input_predictive_maps), ".tif")
-#   },
-#   content = function(file) {
-#     predictive_map <- predict_variables$predictive_map
-#     writeRaster(predictive_map@proj@val[[input$select_input_predictive_maps]], filename=file, format="GTiff", overwrite=TRUE)
-#   }
-# )
+output$download_ensemble_map <- downloadHandler(
+  
+  filename <- function() {
+    paste('ensemble_map', ".tif")
+  },
+  content = function(file) {
+    predictive_map <- predict_variables$ensemble_map
+    writeRaster(predictive_map@proj@val[[predictive_map@models.projected[1]]], filename=file, format="GTiff", overwrite=TRUE)
+  }
+)
+
+output$download_ensemble_weighted_map <- downloadHandler(
+  filename <- function() {
+    paste('ensemble_weighted_map', ".tif")
+  },
+  content = function(file) {
+    predictive_map <- predict_variables$ensemble_map
+    print(predictive_map@models.projected)
+    writeRaster(predictive_map@proj@val[[predictive_map@models.projected[2]]], filename=file, format="GTiff", overwrite=TRUE)
+  }
+)
