@@ -32,3 +32,19 @@ install-r-ubuntu-18.04:
 	sudo apt-get install r-base r-base-dev
 	sudo apt-get install libgdal-dev libproj-dev
 
+install-r-ubuntu-20.04:
+	sudo apt update
+	sudo apt install r-base r-base-dev
+
+install-dependencies-ubuntu-20.04:
+	sudo apt install libgdal-dev libproj-dev
+	sudo apt install libprotobuf-dev
+	sudo apt install libjq-dev
+	sudo apt install libv8-dev
+	sudo apt install libudunits2-dev
+	sudo apt install protobuf-compiler
+	sudo apt install libcurl4-openssl-dev
+	sudo apt install libgdal-dev
+	sudo apt install libssl-dev
+
+
