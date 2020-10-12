@@ -1,28 +1,7 @@
 require(stringr)
 
 observeEvent(input$download_from_DB, {
-    if (is.null(input$sp_name) || str_replace_all(input$sp_name, " ", "") == "") {
-        showModal(modalDialog(
-            title = "Nope",
-            footer = modalButton("OK"),
-            size = c("m"),
-            easyClose = TRUE,
-            "You must fill the species name field"
-        ))
-    }
-    
-    if (is.null(input$select_data_bases)) {
-        showModal(modalDialog(
-            title = "Nope",
-            footer = modalButton("OK"),
-            size = c("m"),
-            easyClose = TRUE,
-            "You must select at least one database"
-        ))
-    }
-    
-    
-    if (length(input$select_data_bases) > 0 & length(input$sp_name) > 0) {
+    if (!(is.null(input$sp_name) || str_replace_all(input$sp_name, " ", "") == "") & !is.null(input$select_data_bases)) {
         species_download <- c()
 
         if (input$upload_file_switch_btn) {
@@ -53,7 +32,7 @@ observeEvent(input$download_from_DB, {
         }
         else {
             showModal(modalDialog(
-                title = "Oh no :(",
+                title = "Ops :(",
                 footer = modalButton("OK"),
                 easyClose = TRUE,
                 paste0("No records found in '", paste(unlist(input$select_data_bases), collapse = ', '), "' for '", input$sp_name, "'")

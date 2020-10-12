@@ -13,6 +13,12 @@ output$download_data_from_db_btn <- downloadHandler(
   }
 )
 
+output$show_distribution_map <- renderUI(
+    if (!is.null(variables$sp_download_db)) {
+        actionButton("show_distribution_map_btn", "Distribution map", icon = icon("map-marked-alt"))
+    }
+)
+
 output$download_sample_sp <- downloadHandler(
   filename <- function() {
     paste("sample_download_species", "csv", sep=".")
@@ -59,7 +65,7 @@ output$sp_download_count <- renderUI({
             icon = icon("list"),
             color = "light-blue",
             fill = TRUE,
-            actionButton("see_downloaded_species", "More")
+            actionButton("see_downloaded_species", "Detail")
         )
     }
 })
@@ -92,7 +98,7 @@ output$sp_download_db <- renderUI({
             icon = icon("list"),
             color = "light-blue",
             fill = TRUE,
-            actionButton("see_db_with_records", "More")
+            actionButton("see_db_with_records", "Detail")
         )
     }
 })
