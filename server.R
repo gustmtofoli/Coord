@@ -30,8 +30,7 @@ function(input, output, session) {
                               results = NULL)
   
   status <- reactiveValues(species_status = FALSE,
-                           predictors_status = FALSE
-                           )
+                           predictors_status = FALSE)
   
   secondary_variables <- reactiveValues(duplicated_sp = NULL, 
                                         duplicated_grid = NULL,
@@ -56,10 +55,8 @@ function(input, output, session) {
                                                      "bison",
                                                      "inat",
                                                      "ebird",
-                                                     "antweb",
                                                      "vertnet",
                                                      "idigbio",
-                                                     "obis",
                                                      "ala"))
   
   predict_variables$algorithms <- data.frame(name = c("GAM - Generalized Linear Model", 
@@ -83,36 +80,12 @@ function(input, output, session) {
                                                         "MARS")
                                              )
   
-  # ========== FUNCTIONS ===============================================================
-  
-  source("SpeciesFreq.R", local=TRUE)
-  source("SpeciesOutliers.R", local=TRUE)
-  source("CalculatePresenceAbsense.R", local=TRUE)
-  source("RunAlgorithm.R", local=TRUE)
-  
-  # ===================================================================================
-  
   # ========== SERVICES ===============================================================
-  
-  source("UploadSpeciesService.R", local=TRUE)
-  source("PredictService.R", local=TRUE)
-  source("PresenceAbsenceService.R", local=TRUE)
   source("SpeciesDataFromDataBasesService.R", local=TRUE)
-  source("PredictorsFromUploadService.R", local=TRUE)
-  source("PredictorsFromUploadService.R", local=TRUE)
-  
   # ===================================================================================
   
   # ========== OUTPUTS ===============================================================
-  
-  source("UploadSpeciesOutputs.R", local=TRUE)
-  source("PredictOutputs.R", local=TRUE)
-  source("PresenceAbsenceOutputs.R", local=TRUE)
   source("SpeciesDataFromDataBasesOutputs.R", local=TRUE)
-  source("EDASpatialDistributionOutputs.R", local=TRUE)
-  source("EDASummaryOutputs.R", local=TRUE)
-  source("PredictorsFromUploadOutputs.R", local=TRUE)
-  
   # ===================================================================================
 }
 

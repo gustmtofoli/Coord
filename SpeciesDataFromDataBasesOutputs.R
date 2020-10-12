@@ -1,3 +1,9 @@
+output$download_data_from_db <- renderUI(
+    if (!is.null(variables$sp_download_db)) {
+        downloadButton("download_data_from_db_btn", "Download")
+    }
+)
+
 output$download_data_from_db_btn <- downloadHandler(
   filename = function() { "downloaded_species_occ.csv" },
   content = function(fname) {
@@ -18,73 +24,81 @@ output$download_sample_sp <- downloadHandler(
 )
 
 output$filter_sp_download <- renderUI({
-  if (!is.null(input$file_species_download)) {
-    file_species_download <- input$file_species_download
-    species_download <- grid_read <- read.csv(file_species_download$datapath, header = input$header,
-                                              sep = input$sep, quote = input$quote)
-    species_name <- unique(species_download$sp)
-    selectInput("selec_filter_download_sp", label = h5("Select species"),
-                choices = species_name,
-                selected = 1, multiple = TRUE)
-  }
+    if (!is.null(input$file_species_download)) {
+        file_species_download <- input$file_species_download
+        species_download <- grid_read <- read.csv(file_species_download$datapath, header = TRUE, sep = ",")
+        species_name <- unique(species_download$sp)
+        selectInput("selec_filter_download_sp", label = "Select species:", choices = species_name, selected = 1, multiple = TRUE)
+    }
 })
 
-output$sp_download_na <- renderInfoBox({
-  downloaded_species <- variables$sp_download_db
-  total_nrow <- nrow(downloaded_species)
-  number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
-  infoBox(
-    "Number of empty records",
-    paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
-    paste0(number_of_na, " of ", nrow(downloaded_species)),
-    icon = icon("list"),
-    color = "light-blue", 
-    fill = TRUE
-  )
+output$sp_download_na <- renderUI({
+    downloaded_species <- variables$sp_download_db
+    total_nrow <- nrow(downloaded_species)
+    number_of_na <- abs(nrow(na.omit(downloaded_species)) - total_nrow)
+    
+    if (!is.null(downloaded_species)) {
+        infoBox(
+            "Number of empty records",
+            paste0(round(((100*number_of_na)/total_nrow), 2), "%"),
+            paste0(number_of_na, " of ", nrow(downloaded_species)),
+            icon = icon("list"),
+            color = "light-blue", 
+            fill = TRUE
+        )
+    }
 })
 
-output$sp_download_count <- renderInfoBox({
-  downloaded_species <- variables$sp_download_db
-  number_of_species <- length(unique(downloaded_species$sp))
-  infoBox(
-    "Number of Species",
-    paste0(number_of_species),
-    icon = icon("list"),
-    color = "light-blue", 
-    fill = TRUE,
-    actionButton("see_downloaded_species", "More")
-  )
+output$sp_download_count <- renderUI({
+    downloaded_species <- variables$sp_download_db
+    number_of_species <- length(unique(downloaded_species$sp))
+    if (!is.null(downloaded_species)) {
+        infoBox(
+            "Number of Species",
+            paste0(number_of_species),
+            icon = icon("list"),
+            color = "light-blue",
+            fill = TRUE,
+            actionButton("see_downloaded_species", "More")
+        )
+    }
 })
 
-output$sp_download_duplicated <- renderInfoBox({
-  downloaded_species <- variables$sp_download_db
-  downloaded_species.na.omit <- na.omit(downloaded_species)
-  n_duplicated_rows <- nrow(downloaded_species[duplicated(downloaded_species.na.omit), ])
-  infoBox(
-    "Duplicated occurences",
-    paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
-    paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
-    icon = icon("list"),
-    color = "light-blue", 
-    fill = TRUE
-  )
+output$sp_download_duplicated <- renderUI({
+    downloaded_species <- variables$sp_download_db
+    downloaded_species_without_na <- na.omit(downloaded_species)
+    n_duplicated_rows <- nrow(downloaded_species_without_na[duplicated(downloaded_species_without_na), ])
+    
+    if (!is.null(downloaded_species)) {
+        infoBox(
+            "Duplicated occurences",
+            paste0(round(((100*n_duplicated_rows)/nrow(downloaded_species)), 2), "%"),
+            paste0(n_duplicated_rows, " of ", nrow(downloaded_species)),
+            icon = icon("list"),
+            color = "light-blue", 
+            fill = TRUE
+        )
+    }
 })
 
-output$sp_download_db <- renderInfoBox({
-  downloaded_species <- variables$sp_download_db
-  n_data_bases <- length(unique(downloaded_species$data_base))
-  infoBox(
-    "Data Bases with records",
-    paste0(n_data_bases),
-    icon = icon("list"),
-    color = "light-blue",
-    fill = TRUE,
-    actionButton("see_db_with_records", "More")
-  )
+output$sp_download_db <- renderUI({
+    downloaded_species <- variables$sp_download_db
+    n_data_bases <- length(unique(downloaded_species$data_base))
+    
+    if (!is.null(downloaded_species)) {
+        infoBox(
+            "Databases with records",
+            paste0(n_data_bases),
+            icon = icon("list"),
+            color = "light-blue",
+            fill = TRUE,
+            actionButton("see_db_with_records", "More")
+        )
+    }
 })
 
 output$select_DB <- renderUI({
-  selectInput("select_data_bases", label = "Select Data base: ",
+  selectInput("select_data_bases", label = "Select database: ",
               choices = predict_variables$data_bases,
               selected = 1, multiple = TRUE)
 })

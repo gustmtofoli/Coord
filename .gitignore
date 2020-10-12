@@ -34,3 +34,9 @@ Buceros\.rhinoceros/proj_current/
 *.xml
 
 .project
+
+.ipynb_checkpoints/
+
+.RData
+
+.Rhistory
