@@ -24,7 +24,7 @@ output$download_sample_sp <- downloadHandler(
     paste("sample_download_species", "csv", sep=".")
   },
   content <- function(file) {
-    file.copy("samples/sample_download_species.csv", file)
+    file.copy("./sample_download_species.csv", file)
   },
   contentType = "application/csv"
 )

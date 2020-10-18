@@ -22,6 +22,9 @@ RUN R -e "install.packages('spocc', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('sp', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('stringr', repos='http://cran.rstudio.com/')"
 
+ADD samples/ /srv/shiny-server/
+RUN mkdir www
+ADD www/ /srv/shiny-server/www/
 COPY Coord.Rproj /srv/shiny-server/
 COPY SpeciesDataFromDataBasesOutputs.R /srv/shiny-server/
 COPY SpeciesDataFromDataBasesService.R /srv/shiny-server/
