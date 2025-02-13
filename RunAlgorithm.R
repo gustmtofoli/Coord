@@ -5,7 +5,7 @@ runAlgorithm = function(predictors, pres_abs) {
       title = "Hey",
       footer = NULL,
       easyClose = FALSE,
-      "This may take some time... coffee?"
+      "This may take some time"
     ))
     
     datafiles <- predictors
@@ -75,21 +75,31 @@ runAlgorithm = function(predictors, pres_abs) {
     print(">>>>>>>>>>")
     print(input$select_input_eval_method)
     print(">>>>>>>>>>")
-    myBiomodOption <- BIOMOD_ModelingOptions()
+    myBiomodOption <- bm_ModelingOptions(data.type = 'binary',
+                                         models = c('GLM', 'GAM', 'RF', 'GBM'),
+                                         strategy = 'default'
+                                         # user.val = NULL,
+                                         # user.base = 'bigboss',
+                                         # bm.format = bm.Tursiops
+                                         )
     myBiomodModelOut <- BIOMOD_Modeling(
       myBiomodData,
+      modeling.id = as.character(format(Sys.time(), "%s")),
       models = algorithm,
-      models.options = myBiomodOption,
-      NbRunEval=as.numeric(input$number_of_executions),
-      DataSplit=as.numeric(input$training_set),
-      Prevalence=0.5,
-      VarImport=3, #length(stck@layers),
+      # models.options = myBiomodOption,
+      # NbRunEval=as.numeric(input$number_of_executions),
+      CV.strategy = "random",
+      CV.perc = as.numeric(input$training_set)/100,
+      CV.nb.rep = as.numeric(input$number_of_executions),
+      # DataSplit=as.numeric(input$training_set),
+      prevalence = NULL,
+      var.import=3, #length(stck@layers),
       # models.eval.meth = c('TSS','ROC'),
-      models.eval.meth = input$select_input_eval_method,
-      SaveObj = FALSE,
-      rescal.all.models = TRUE,
-      do.full.models = FALSE,
-      modeling.id = paste("só pra passar","FirstModeling",sep=""))
+      metric.eval = input$select_input_eval_method
+      # SaveObj = FALSE,
+      # rescal.all.models = TRUE,
+      # do.full.models = FALSE
+      )
     
     # ================================================================================
     
@@ -103,7 +113,7 @@ runAlgorithm = function(predictors, pres_abs) {
     print("\n>>>>> MODELO")
     print(model_info)
     
-    BiomodModelsProjection <- BIOMOD_Projection(modeling.output = myBiomodModelOut,
+    BiomodModelsProjection <- BIOMOD_Projection(bm.mod = myBiomodModelOut,
                                                 new.env = stck,
                                                 proj.name = 'current',
                                                 selected.models = 'all',
@@ -120,34 +130,36 @@ runAlgorithm = function(predictors, pres_abs) {
     
     # ===============================================================================
     if (input$ensemble_switch_btn) {
-      myBiomodEM <- BIOMOD_EnsembleModeling( modeling.output = myBiomodModelOut,
-                                             chosen.models = 'all',
+      myBiomodEM <- BIOMOD_EnsembleModeling( bm.mod = myBiomodModelOut,
+                                             models.chosen = 'all',
                                              em.by = 'all',
-                                             eval.metric = input$select_input_eval_method_ensemble,
-                                             eval.metric.quality.threshold = c(0.7),
-                                             models.eval.meth = input$select_input_eval_method,
-                                             prob.mean = TRUE,
-                                             prob.cv = FALSE,
-                                             prob.ci = FALSE,
-                                             prob.ci.alpha = 0.05,
-                                             prob.median = FALSE,
-                                             committee.averaging = FALSE,
-                                             prob.mean.weight = TRUE,
-                                             prob.mean.weight.decay = 'proportional' )   
+                                             em.algo = c('EMmean', 'EMwmean'),
+                                             metric.select = input$select_input_eval_method_ensemble,
+                                             metric.select.thresh = c(0.7),
+                                             metric.eval = input$select_input_eval_method,
+                                            #  prob.mean = TRUE,
+                                            #  prob.cv = FALSE,
+                                            #  prob.ci = FALSE,
+                                            #  prob.ci.alpha = 0.05,
+                                            #  prob.median = FALSE,
+                                            #  committee.averaging = FALSE,
+                                            #  prob.mean.weight = TRUE,
+                                             EMwmean.decay = 'proportional' )   
       
       # myBiomodEM
       print("\n>>>>>>ENSEMBLE")
       print(get_evaluations(myBiomodEM))
       predict_variables$ensemble_model <- myBiomodEM
-      predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( projection.output = BiomodModelsProjection,
-                                                                    EM.output = myBiomodEM)
+      predict_variables$ensemble_map <- BIOMOD_EnsembleForecasting( bm.em = myBiomodEM,
+                                                                    bm.proj = BiomodModelsProjection,
+                                                                  )
     }
     
     end_time <- Sys.time()
     predict_variables$execution_time = round((end_time - start_time), 2)
     
     showModal(modalDialog(
-      title = "Nice work!",
+      title = "Done",
       footer = NULL,
       easyClose = TRUE
     ))

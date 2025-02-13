@@ -6,7 +6,7 @@ install.packages('dplyr')
 install.packages('DT')
 install.packages('shinydashboard')
 install.packages('curl')
-install.packages('maptools')
+install.packages('maptools') # does not exists in R 4.3.3
 install.packages('dismo')
 
 # sudo apt-get install libprotobuf-dev
@@ -32,12 +32,12 @@ install.packages('units')
 # sudo apt-cache policy libgdal-dev
 # sudo apt update
 # sudo apt install libgdal-dev
-install.packages('rgdal')
+install.packages('rgdal') # not available for this version of R 4.3.3
 install.packages('sf')
-install.packages('rgeos')
+install.packages('rgeos') # not available for R 4.3.3
 
 
-
+# ---> parei aqui
 
 install.packages('openssl')
 install.packages('httr')

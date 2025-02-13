@@ -51,7 +51,7 @@ observeEvent(input$download_from_DB, {
       variables$sp_download_db <- df_data[, 1:4]
       status$species_status <- TRUE
       showModal(modalDialog(
-        title = "Nice work!!",
+        title = "Done",
         footer = NULL,
         easyClose = TRUE
       ))

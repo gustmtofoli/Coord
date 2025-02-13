@@ -9,14 +9,18 @@ output$show_predict_map <- renderPlot({
     # if (!is.null(predict_variables$predictive_map)) {
     predictive_map <- predict_variables$predictive_map
     models_projected_names <- predictive_map@models.projected
-    projections <- stack(predictive_map@proj@link)
+    print(">>>> projections")
+    print(predictive_map)
+    my_prediction = get_predictions(predictive_map)
+    projections <- stack(my_prediction)
     
     # print(input$group_pred_maps_btn)
     if (group_maps) {
-      plot(predictive_map@proj@val)
+      # plot(predictive_map@proj@val)
+      plot(projections)
     }
     else {
-      plot(predictive_map@proj@val[[input$select_input_predictive_maps]])
+      plot(projections[[input$select_input_predictive_maps]])
     }
     # plot(predictive_map, str.grep = input$select_input_predictive_maps)
     # plot(projections[[input$select_input_predictive_maps]])
@@ -39,7 +43,8 @@ output$show_ensemble_map <- renderPlot({
     ensemble_map <- predict_variables$ensemble_map
     # plot(predictive_map@proj@val)
     # plot(predict_variables$ensemble_map)
-    plot(ensemble_map@proj@val)
+    
+    plot(get_predictions(ensemble_map))
     # plot(ensemble_map)
     # plot(ensemble_map@proj@val[[input$select_input_ensemble_maps]])
   }
@@ -84,67 +89,70 @@ output$info_training_testing <- DT::renderDataTable({
 output$info_eval_AUC <- DT::renderDataTable({
   print(input$select_eval_method)
   if (!is.null(predict_variables$predictive_model)) {
+    
     models <- predict_variables$predictive_model
     evaluations <- get_evaluations(models)
     df_eval <- data.frame(evaluations)
-    ini_col <- 1
-    # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
-    df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
-    rownames(df_eval_auc) <-c(models@models.computed[1])
-    ini_col <- ini_col + 3
-    for (i in 2:length(models@models.computed)) {
-      ini_col <- ini_col + 1
-      df_eval_auc[models@models.computed[i], ] <- df_eval['ROC', ini_col:(ini_col+3)]
-      ini_col <- ini_col + 3
-    }
+  #   ini_col <- 1
+  #   # df_eval_auc <- data.frame(df_eval[2, ini_col:(ini_col+3)])
+  #   df_eval_auc <- data.frame(df_eval['ROC', ini_col:(ini_col+3)])
+  #   rownames(df_eval_auc) <-c(models@models.computed[1])
+  #   ini_col <- ini_col + 3
+  #   for (i in 2:length(models@models.computed)) {
+  #     ini_col <- ini_col + 1
+  #     df_eval_auc[models@models.computed[i], ] <- df_eval['ROC', ini_col:(ini_col+3)]
+  #     ini_col <- ini_col + 3
+  #   }
     
-    if (!is.null(predict_variables$ensemble_model)) {
-      ini_col <- 1
-      ensemble_model <- predict_variables$ensemble_model
-      ensemble_evaluations <- get_evaluations(ensemble_model)
-      df_eval_ensemble <- data.frame(ensemble_evaluations)
-      for (j in 1:length(ensemble_model@em.computed)) {
-        df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
-        ini_col <- ini_col + 4
-      }
-    }
+  #   if (!is.null(predict_variables$ensemble_model)) {
+  #     ini_col <- 1
+  #     ensemble_model <- predict_variables$ensemble_model
+  #     ensemble_evaluations <- get_evaluations(ensemble_model)
+  #     df_eval_ensemble <- data.frame(ensemble_evaluations)
+  #     for (j in 1:length(ensemble_model@em.computed)) {
+  #       df_eval_auc[ensemble_model@em.computed[j], ] <- df_eval_ensemble['ROC', ini_col:(ini_col+3)]
+  #       ini_col <- ini_col + 4
+  #     }
+  #   }
     
-    colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-    df_eval_auc
+  #   colnames(df_eval_auc) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+  #   df_eval_auc
+    df_eval
   }
 })
 
-output$info_eval_TSS <- DT::renderDataTable({
-  if (!is.null(predict_variables$predictive_model)) {
-    models <- predict_variables$predictive_model
-    evaluations <- get_evaluations(models)
-    df_eval <- data.frame(evaluations)
-    ini_col <- 1
-    # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
-    df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
-    rownames(df_eval_tss) <-c(models@models.computed[1])
-    ini_col <- ini_col + 3
-    for (i in 2:length(models@models.computed)) {
-      ini_col <- ini_col + 1
-      df_eval_tss[models@models.computed[i], ] <- df_eval['TSS', ini_col:(ini_col+3)]
-      ini_col <- ini_col + 3
-    }
+# output$info_eval_TSS <- DT::renderDataTable({
+#   if (!is.null(predict_variables$predictive_model)) {
+#     models <- predict_variables$predictive_model
+#     evaluations <- get_evaluations(models)
+#     df_eval <- data.frame(evaluations)
+#     # ini_col <- 1
+#     # # df_eval_tss <- data.frame(df_eval[1, ini_col:(ini_col+3)])
+#     # df_eval_tss <- data.frame(df_eval['TSS', ini_col:(ini_col+3)])
+#     # rownames(df_eval_tss) <-c(models@models.computed[1])
+#     # ini_col <- ini_col + 3
+#     # for (i in 2:length(models@models.computed)) {
+#     #   ini_col <- ini_col + 1
+#     #   df_eval_tss[models@models.computed[i], ] <- df_eval['TSS', ini_col:(ini_col+3)]
+#     #   ini_col <- ini_col + 3
+#     # }
     
-    if (!is.null(predict_variables$ensemble_model)) {
-      ensemble_model <- predict_variables$ensemble_model
-      ensemble_evaluations <- get_evaluations(ensemble_model)
-      df_eval_ensemble <- data.frame(ensemble_evaluations)
-      ini_col <- 1
-      for (j in 1:length(ensemble_model@em.computed)) {
-        df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]
-        ini_col <- ini_col + 4
-      }
-    }
+#     # if (!is.null(predict_variables$ensemble_model)) {
+#     #   ensemble_model <- predict_variables$ensemble_model
+#     #   ensemble_evaluations <- get_evaluations(ensemble_model)
+#     #   df_eval_ensemble <- data.frame(ensemble_evaluations)
+#     #   ini_col <- 1
+#     #   for (j in 1:length(ensemble_model@em.computed)) {
+#     #     df_eval_tss[ensemble_model@em.computed[j], ] <- df_eval_ensemble['TSS', ini_col:(ini_col+3)]
+#     #     ini_col <- ini_col + 4
+#     #   }
+#     # }
     
-    colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
-    df_eval_tss
-  }
-})
+#     # colnames(df_eval_tss) <- c("testing data", "cutoff", "sensitivity", "Specificity")
+#     # df_eval_tss
+#     df_eval
+#   }
+# })
 
 output$species_infobox <- renderInfoBox({
   infoBox(

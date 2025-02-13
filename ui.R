@@ -10,7 +10,7 @@ library(shinyjs)
 
 
 
-header <- dashboardHeaderPlus(
+header <- dashboardHeader(
   
   title = tagList(
     span(class = "logo-lg", "COORD"),
@@ -93,16 +93,16 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   useShinyjs(),
   tabItems(
-    tabItem(
-      "home",
-      fluidRow(
-        infoBox("Download Species Data", "Integration with GBIF and +9 databases", width = 6, icon = icon("th"), fill = TRUE),
-        infoBox("Download Predictors Data", "Integration with Wordclim", width = 6, icon = icon("leaf"), fill = TRUE),
-        infoBox("Explore the data", "See the distribution of your data with interactive maps and charts", width = 6, icon = icon("map"), fill = TRUE),
-        infoBox("Presence and Absence", "You can generate the presence/absence file from yout own data", width = 6, icon = icon("th-list"), fill = TRUE),
-        infoBox("Predict", "Run machine learning algorithms, make an ensemble model and generate the predictive maps.", width = 6, icon = icon("cube"), fill = TRUE)
-      )
-    ),
+    # tabItem(
+    #   "home",
+    #   fluidRow(
+    #     infoBox("Download Species Data", "Integration with GBIF and +9 databases", width = 6, icon = icon("th"), fill = TRUE),
+    #     infoBox("Download Predictors Data", "Integration with Wordclim", width = 6, icon = icon("leaf"), fill = TRUE),
+    #     infoBox("Explore the data", "See the distribution of your data with interactive maps and charts", width = 6, icon = icon("map"), fill = TRUE),
+    #     infoBox("Presence and Absence", "You can generate the presence/absence file from yout own data", width = 6, icon = icon("th-list"), fill = TRUE),
+    #     infoBox("Predict", "Run machine learning algorithms, make an ensemble model and generate the predictive maps.", width = 6, icon = icon("cube"), fill = TRUE)
+    #   )
+    # ),
     tabItem(
       "upload_species_file",
       fluidRow(
@@ -490,8 +490,8 @@ body <- dashboardBody(
           width = 12,
           # The id lets us use input$tabset1 on the server to find the current tab
           id = "info_eval_tab_test",
-          tabPanel("ROC", DT::dataTableOutput("info_eval_AUC")%>% withSpinner(color="#0dc5c1")),
-          tabPanel("TSS", DT::dataTableOutput("info_eval_TSS")%>% withSpinner(color="#0dc5c1"))
+          tabPanel("Evaluations", DT::dataTableOutput("info_eval_AUC")%>% withSpinner(color="#0dc5c1"))
+          # tabPanel("TSS", DT::dataTableOutput("info_eval_TSS")%>% withSpinner(color="#0dc5c1"))
         )
       ),
       
@@ -533,7 +533,7 @@ body <- dashboardBody(
 )
 
 shinyUI(
-  dashboardPagePlus(
+  dashboardPage(
     skin = "green",
     header,
     sidebar,
