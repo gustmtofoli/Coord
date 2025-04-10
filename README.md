@@ -2,6 +2,26 @@
 
 Species distribution modelling software that joins exploratory data analysis, integration with data bases, as gbif, ecoengine, worldclim, etc, and many machine learning algorithms, as Random Forest, SVM and GLM with the objective of create predictive models, richness maps and potential distribution maps of one or more species.
 
+## 1. Search species occurrences from multiple databses
+
+![alt text](img/search_species_from_databases.png)
+
+![alt text](img/search_species_from_databases_2.png)
+
+## 2. Choose the algorithms to perform the predictions
+
+![alt text](img/choose_algorithms.png)
+
+## 3. Result: Model Evalutations
+
+![alt text](img/model_evaluations.png)
+
+## 4. Result: Predictive Maps
+
+![alt text](img/predictive_maps.png)
+
+
+
 ## Install
 
 To run this project in your local machine follow the instructions:
@@ -18,5 +38,3 @@ To run this project in your local machine follow the instructions:
 
 if you're having some problem to install or run this project, please let me know. Send me an email and I'll be happy to help.
 
-# Check some little sample:
-https://jupiter.shinyapps.io/COORD/
